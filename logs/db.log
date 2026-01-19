@@ -1,0 +1,8 @@
+[2026-01-17 03:27:09] Falha (bd-prontuario.mysql.uhserver.com): SQLSTATE[HY000] [2002] php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known
+[2026-01-17 03:27:09] Falha (mydb-accert-new.mysql.uhserver.com): SQLSTATE[HY000] [2002] php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known
+[2026-01-17 03:27:09] Falha (mdb-accert.mysql.uhserver.com): SQLSTATE[HY000] [2002] php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known
+[2026-01-17 03:33:00] Falha (bd-prontuario.mysql.uhserver.com): SQLSTATE[HY000] [1044] Access denied for user 'diretoria40'@'%' to database 'db_prontuario'
+[2026-01-17 03:35:44] Falha (bd-prontuario.mysql.uhserver.com): SQLSTATE[HY000] [1044] Access denied for user 'diretoria40'@'%' to database 'db_prontuario'
+[2026-01-17 03:36:21] Falha (bd-prontuario.mysql.uhserver.com): SQLSTATE[HY000] [1044] Access denied for user 'diretoria40'@'%' to database 'db_prontuario'
+[2026-01-17 03:37:31] Falha (bd-prontuario.mysql.uhserver.com): SQLSTATE[HY000] [1044] Access denied for user 'diretoria40'@'%' to database 'db_prontuario'
+[2026-01-17 03:37:35] Falha (bd-prontuario.mysql.uhserver.com): SQLSTATE[HY000] [1044] Access denied for user 'diretoria40'@'%' to database 'db_prontuario'

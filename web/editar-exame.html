@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Editar exame cadastrado – Prontuário</title>
+  <style>
+    :root {
+      font-family: "Inter", system-ui, sans-serif;
+      color: #0f172a;
+      background-color: #eef2ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #eef2ff, #e0f2fe);
+      padding: 2rem 1rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .card {
+      width: min(820px, 100%);
+      background: #fff;
+      border-radius: 1.25rem;
+      padding: 2rem;
+      box-shadow: 0 35px 60px rgba(15, 23, 42, 0.15);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      color: #0f172a;
+    }
+
+    p {
+      margin: 0.35rem 0 1.5rem;
+      color: #475569;
+    }
+
+    .grid-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.9rem;
+      color: #1e1b4b;
+      gap: 0.4rem;
+    }
+
+    input,
+    select,
+    textarea {
+      padding: 0.8rem 0.9rem;
+      border-radius: 0.7rem;
+      border: 1px solid #cbd5f5;
+      background: #f8fafc;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .actions {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .button {
+      border: none;
+      border-radius: 0.75rem;
+      padding: 0.9rem 1.5rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .button.primary {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      color: #fff;
+    }
+
+    .button.secondary {
+      background: #f8fafc;
+      border: 1px solid #cbd5f5;
+      color: #1e1b4b;
+    }
+
+    .loading {
+      margin-top: 1rem;
+      color: #475569;
+      font-size: 0.95rem;
+    }
+
+    .form-feedback {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 0.65rem;
+      border: 1px solid transparent;
+      font-size: 0.95rem;
+    }
+
+    .form-feedback.success {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.5);
+      color: #047857;
+    }
+
+    .form-feedback.error {
+      background: rgba(248, 113, 113, 0.15);
+      border-color: rgba(248, 113, 113, 0.5);
+      color: #b91c1c;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Editar exame cadastrado</h1>
+    <p>Atualize as referências, frequência ou laboratório antes do exame ser coletado. <a href="listagem-exames-cadastrados.html">Voltar para a lista</a>.</p>
+
+    <form id="edit-exam-form" class="grid-form" hidden>
+      <input type="hidden" name="exame_id" />
+
+      <label>
+        Nome do exame
+        <input type="text" name="nome_exame" required />
+      </label>
+
+      <label>
+        Tipo
+        <select name="tipo_exame" required>
+          <option value="">Selecione</option>
+          <option value="laboratorial">Laboratorial</option>
+          <option value="imagem">Imagem</option>
+          <option value="clinico">Clínico</option>
+        </select>
+      </label>
+
+      <label>
+        Unidade
+        <input type="text" name="unidade" />
+      </label>
+
+      <label>
+        Referência mínima
+        <input type="number" step="0.01" name="referencia_min" />
+      </label>
+
+      <label>
+        Referência máxima
+        <input type="number" step="0.01" name="referencia_max" />
+      </label>
+
+      <label>
+        Frequência recomendada
+        <input type="text" name="frequencia" />
+      </label>
+
+      <label>
+        Laboratório
+        <input type="text" name="laboratorio" />
+      </label>
+
+      <label class="full-width">
+        Observações
+        <textarea name="observacoes"></textarea>
+      </label>
+
+      <label>
+        Data prevista
+        <input type="date" name="data_realizacao" />
+      </label>
+    </form>
+
+    <div id="edit-loading" class="loading">Carregando o exame...</div>
+    <div id="exam-feedback" class="form-feedback" aria-live="polite" hidden></div>
+
+    <div class="actions" id="form-actions" hidden>
+      <button type="button" class="button secondary" onclick="window.location.href='listagem-exames-cadastrados.html'">Cancelar</button>
+      <button type="button" class="button primary" id="edit-exam-submit">Salvar alterações</button>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('edit-exam-form');
+    const submitBtn = document.getElementById('edit-exam-submit');
+    const loading = document.getElementById('edit-loading');
+    const feedback = document.getElementById('exam-feedback');
+    const actions = document.getElementById('form-actions');
+
+    const query = new URLSearchParams(window.location.search);
+    const slug = query.get('exame')?.trim() ?? '';
+    const exameIdParam = query.get('exame_id');
+    const exameId = exameIdParam ? Number(exameIdParam) : null;
+    const hasExamId = exameId !== null && !Number.isNaN(exameId);
+    const definitionsUrl = new URL('../process/exam-definitions.php', window.location.href).href;
+    const saveUrl = new URL('../process/exam.php', window.location.href).href;
+
+    const showMessage = (text, type = 'success') => {
+      feedback.textContent = text;
+      feedback.classList.remove('success', 'error');
+      feedback.classList.add(type);
+      feedback.hidden = false;
+    };
+
+    const showError = (text) => {
+      loading.hidden = true;
+      showMessage(text, 'error');
+    };
+
+    const showForm = () => {
+      form.hidden = false;
+      actions.hidden = false;
+      loading.hidden = true;
+    };
+
+    const setField = (name, value) => {
+      const field = form.elements[name];
+      if (field) {
+        field.value = value ?? '';
+      }
+    };
+
+    const loadDefinition = async () => {
+      if (!slug && !hasExamId) {
+        showError('Identificador de exame ausente.');
+        return;
+      }
+
+      try {
+        const response = await fetch(definitionsUrl, {
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+        const payload = await response.json();
+
+        if (!response.ok || payload.success === false) {
+          throw new Error(payload.message ?? 'Falha ao carregar o exame.');
+        }
+
+        const rows = Array.isArray(payload.data) ? payload.data : [];
+        const examRow = rows.find((row) => {
+          const rowId = row.exame_id ? Number(row.exame_id) : null;
+          if (slug && row.slug === slug) {
+            return true;
+          }
+          if (hasExamId && rowId === exameId) {
+            return true;
+          }
+          return false;
+        });
+        if (!examRow) {
+          throw new Error('Exame não encontrado.');
+        }
+
+        setField('exame_id', examRow.exame_id ?? '');
+        setField('nome_exame', examRow.nome);
+        setField('tipo_exame', examRow.tipo);
+        setField('unidade', examRow.unidade);
+        setField('referencia_min', examRow.referencia_min);
+        setField('referencia_max', examRow.referencia_max);
+        setField('frequencia', examRow.frequencia);
+        setField('laboratorio', examRow.laboratorio);
+        setField('observacoes', examRow.observacoes);
+        if (examRow.data_realizacao) {
+          setField('data_realizacao', examRow.data_realizacao.split(' ')[0]);
+        }
+
+        showForm();
+      } catch (error) {
+        showError(error instanceof Error ? error.message : 'Erro inesperado.');
+      }
+    };
+
+    const saveExam = async () => {
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      feedback.hidden = true;
+
+      try {
+        const response = await fetch(saveUrl, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        const contentType = response.headers.get('content-type') ?? '';
+        const text = await response.text();
+
+        if (!contentType.includes('application/json')) {
+          throw new Error('Resposta inesperada do servidor.');
+        }
+
+        const payload = JSON.parse(text);
+        if (!response.ok || payload.success === false) {
+          throw new Error(payload.message ?? 'Erro ao salvar o exame.');
+        }
+
+        showMessage(payload.message ?? 'Alterações salvas.', 'success');
+      } catch (error) {
+        showMessage(error instanceof Error ? error.message : 'Erro inesperado.', 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    };
+
+    submitBtn.addEventListener('click', saveExam);
+    window.addEventListener('DOMContentLoaded', loadDefinition);
+  </script>
+</body>
+</html>
