@@ -1,0 +1,126 @@
+body.app-mode {
+  background: linear-gradient(180deg, #e8effa 0%, #dcdff5 100%);
+}
+
+body.app-mode .site-header {
+  margin: 0 0.75rem;
+  border-radius: 1.5rem;
+  padding: 0.85rem 1rem;
+  box-shadow: 0 25px 45px rgba(15, 23, 42, 0.18);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+body.app-mode .site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding-bottom: 0.35rem;
+}
+
+body.app-mode .site-nav a {
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 999px;
+  background: #dbe6ff;
+  color: #13192d;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  text-transform: none;
+}
+
+body.app-mode .site-nav a:hover {
+  background: #c7d7ff;
+}
+
+body.app-mode .site-logo span {
+  font-size: 1.2rem;
+}
+
+body.app-mode .site-logo img {
+  width: 72px;
+  height: 72px;
+}
+
+body.app-mode .site-shell {
+  padding-top: 0.25rem;
+  padding-bottom: 2rem;
+}
+
+body.app-mode .panel,
+body.app-mode .card {
+  padding: 1.5rem;
+  border-radius: 1.75rem;
+}
+
+body.app-mode .card p {
+  margin-bottom: 1.25rem;
+}
+
+body.app-mode .table-container {
+  border-radius: 1.5rem;
+  padding: 0.35rem;
+  background: #fff;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+body.app-mode .icon-button {
+  width: 36px !important;
+}
+
+@media screen and (max-width: 800px) {
+  body.app-mode table {
+    font-size: 0.92rem;
+  }
+
+  body.app-mode th,
+  body.app-mode td {
+    padding: 0.75rem 0.65rem;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  body.app-mode .site-shell > .panel,
+  body.app-mode .site-shell > .card,
+  body.app-mode .site-shell > section {
+    width: min(540px, 100%);
+    margin: 0 auto;
+  }
+
+  body.app-mode .site-shell {
+    padding-bottom: 2.25rem;
+  }
+}
+
+@media only screen and (max-width: 520px) {
+  body.app-mode .site-shell > .panel,
+  body.app-mode .site-shell > .card,
+  body.app-mode .site-shell > section {
+    width: calc(100% - 24px);
+  }
+
+  body.app-mode .site-shell {
+    padding: 0.25rem 0.75rem 2rem;
+  }
+
+  body.app-mode .site-header {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    border-radius: 1.25rem;
+  }
+
+  body.app-mode .site-logo {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  body.app-mode .site-nav {
+    justify-content: center;
+  }
+
+  body.app-mode .card {
+    padding: 1.25rem;
+  }
+}

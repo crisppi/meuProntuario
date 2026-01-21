@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+    </style>
+
+
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@drawable/splash</item>
+    </style>
+    <style>
+        :root {
+        font-family: "Inter", system-ui, sans-serif;
+        color: #0f172a;
+        background-color: #eef2ff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body { margin: 0; min-height: 100vh; }
+
+        /* Ajuste do Painel para não ter margens sobrando no celular */
+        .panel {
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 10px; /* Margem pequena nas bordas do celular */
+        }
+
+        .card {
+        background: #fff;
+        border-radius: 1rem;
+        padding: 1.5rem; /* Reduzi um pouco para ganhar espaço */
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
+        }
+
+        .card h1 {
+        margin-top: 0;
+        font-size: 1.5rem; /* Menor no mobile */
+        color: #111827;
+        }
+
+        /* --- MÁGICA PARA MOBILE --- */
+        @media screen and (max-width: 768px) {
+        /* Esconde o cabeçalho da tabela original */
+        thead { display: none; }
+
+        /* Transforma cada linha (TR) em um Card individual */
+        tr {
+        display: block;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: #f8fafc;
+        }
+
+        /* Transforma cada célula (TD) em uma linha com rótulo */
+        td {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #edf2f7;
+        text-align: right;
+        }
+
+        td:last-child { border-bottom: none; }
+
+        /* Adiciona o nome da coluna antes do valor usando o atributo data-label */
+        td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #64748b;
+        text-align: left;
+        padding-right: 10px;
+        }
+
+        .action-cell {
+        justify-content: center;
+        background: #eff6ff;
+        margin-top: 5px;
+        border-radius: 0.5rem;
+        }
+        }
+
+        /* Botão de ação maior para o dedo */
+        .icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px; /* Tamanho ideal para toque */
+        height: 44px;
+        border-radius: 12px;
+        border: 1px solid #cbd5f5;
+        background: #fff;
+        color: #2563eb;
+        text-decoration: none;
+        font-size: 1.2rem;
+        }
+    </style>
+</resources>

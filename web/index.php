@@ -4,106 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Prontuário Médico - Pessoa Física</title>
-  <style>
-    :root {
-      font-family: "Inter", system-ui, sans-serif;
-      color: #0f172a;
-      background-color: #eef2ff;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: transparent;
-    }
-    
-    .app-shell {
-      max-width: 1100px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 1.5rem;
-      box-shadow: 0 35px 60px rgba(15, 23, 42, 0.12);
-      padding: 2rem;
-    }
-
-    .panel-header h1 {
-      margin: 0;
-      font-size: 2rem;
-      color: #0f172a;
-    }
-
-    .panel-header p {
-      margin: 0.35rem 0 1.5rem;
-      color: #475569;
-    }
-
-    .table-wrapper {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.95rem;
-    }
-
-    th,
-    td {
-      padding: 0.9rem 0.75rem;
-      text-align: left;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    th {
-      font-weight: 600;
-      color: #1f2937;
-      background: #f8fafc;
-    }
-
-    td {
-      color: #1e1b4b;
-    }
-
-    td strong {
-      display: block;
-    }
-
-    .action-cell {
-      width: 60px;
-      text-align: center;
-    }
-
-    .icon-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 1px solid #cbd5f5;
-      background: #fff;
-      color: #2563eb;
-      text-decoration: none;
-      font-size: 1rem;
-    }
-
-    .icon-button:hover {
-      background: #2563eb;
-      color: #fff;
-      border-color: #2563eb;
-    }
-
-    .content {
-      display: flex;
-      flex-direction: column;
-    }
-  </style>
+  <link rel="stylesheet" href="assets/styles/web.css" />
+  <link rel="stylesheet" href="assets/styles/app-overrides.css" />
 </head>
-  <body>
+  <body class="web-mode">
     <?php include __DIR__ . '/header.php'; ?>
     <main class="site-shell">
       <div class="app-shell">
