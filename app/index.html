@@ -13,7 +13,7 @@
       <div>
         <p class="app-kicker">Organizador de saúde</p>
         <h1>Meu Prontuário</h1>
-        <p>Acompanhe consultas, exames, medicamentos e informações pessoais no próprio aparelho.</p>
+        <p>Acompanhe consultas, exames, medicamentos e informações pessoais.</p>
       </div>
     </div>
     <button type="button" class="menu-toggle" id="app-menu-toggle" aria-expanded="false" aria-controls="app-nav">
@@ -26,13 +26,16 @@
 
   <nav class="app-local-nav" id="app-nav" aria-label="Módulos do aplicativo" hidden>
     <button type="button" class="button ghost" data-screen-target="dashboard">Dashboard</button>
+    <button type="button" class="button ghost" data-screen-target="alerts">Alertas</button>
+    <button type="button" class="button ghost" data-screen-target="doctor-mode">Modo consulta</button>
+    <button type="button" class="button ghost" data-screen-target="pre-consultation">Pré-consulta</button>
     <button type="button" class="button ghost" data-screen-target="personal">Dados pessoais</button>
     <button type="button" class="button ghost" data-screen-target="profile">Perfil</button>
     <button type="button" class="button ghost" data-screen-target="consultations">Consultas</button>
     <button type="button" class="button ghost" data-screen-target="medications">Medicamentos</button>
     <button type="button" class="button ghost" data-screen-target="exams">Exames</button>
     <button type="button" class="button ghost" data-screen-target="privacy">Privacidade</button>
-    <button type="button" class="button secondary" id="logout-btn">Limpar sessão local</button>
+    <button type="button" class="button secondary" id="logout-btn">Limpar sessão</button>
   </nav>
 
   <main class="app-local-main">
@@ -47,6 +50,93 @@
         <article class="local-stat-card"><span>Consultas</span><strong id="stat-consultations">0</strong></article>
         <article class="local-stat-card"><span>Medicamentos</span><strong id="stat-medications">0</strong></article>
         <article class="local-stat-card"><span>Anexos</span><strong id="stat-attachments">0</strong></article>
+        <article class="local-stat-card alert-stat"><span>Fora da referência</span><strong id="stat-alerts">0</strong></article>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="alerts" hidden>
+      <div class="local-section-header">
+        <h2>Alertas</h2>
+        <p class="muted">Resultados recentes fora da faixa de referência.</p>
+      </div>
+      <div class="local-card">
+        <p class="alert-intro">Tenha atenção a estes resultados e considere repetir o exame em breve. Se houver sintomas, piora clínica ou dúvida, procure orientação profissional.</p>
+        <div id="exam-alert-list" class="alert-list"></div>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="doctor-mode" hidden>
+      <div class="local-section-header">
+        <h2>Modo consulta</h2>
+        <p class="muted">Resumo limpo para mostrar durante o atendimento.</p>
+      </div>
+      <div class="local-stack doctor-summary">
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Exames que merecem atenção</h3>
+          </div>
+          <div id="doctor-alerts" class="compact-list"></div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Evolução dos exames</h3>
+          </div>
+          <div id="doctor-evolution" class="evolution-grid"></div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Medicamentos em uso</h3>
+          </div>
+          <div id="doctor-medications" class="compact-list"></div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Consultas recentes</h3>
+          </div>
+          <div id="doctor-consultations" class="compact-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="pre-consultation" hidden>
+      <div class="local-section-header">
+        <h2>Pré-consulta</h2>
+        <p class="muted">Organize os pontos principais antes do atendimento.</p>
+      </div>
+      <div class="local-stack">
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Checklist</h3>
+          </div>
+          <div class="precheck-list">
+            <label><input type="checkbox" checked disabled /> Revisar exames alterados</label>
+            <label><input type="checkbox" checked disabled /> Conferir medicamentos em uso</label>
+            <label><input type="checkbox" checked disabled /> Anotar sintomas ou mudanças recentes</label>
+            <label><input type="checkbox" checked disabled /> Separar perguntas para o médico</label>
+          </div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Exames alterados</h3>
+          </div>
+          <div id="preconsult-alerts" class="compact-list"></div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Medicamentos em uso</h3>
+          </div>
+          <div id="preconsult-medications" class="compact-list"></div>
+        </div>
+        <div class="local-card">
+          <form id="preconsultation-form" class="grid-form">
+            <label class="full-width">Observações para a consulta<textarea name="observacoes" placeholder="Sintomas, mudanças recentes, dúvidas gerais"></textarea></label>
+            <label class="full-width">Perguntas para o médico<textarea name="perguntas" placeholder="Ex: Preciso repetir algum exame? Ajustar medicamento?"></textarea></label>
+          </form>
+          <div class="actions">
+            <button type="button" class="button primary" id="preconsultation-save">Salvar pré-consulta</button>
+          </div>
+          <div id="preconsultation-feedback" class="form-feedback" hidden></div>
+        </div>
       </div>
     </section>
 
@@ -58,18 +148,9 @@
       <div class="local-card">
         <form id="personal-form" class="grid-form">
           <label>Nome completo<input type="text" name="nome" required /></label>
-          <label>CPF<input type="text" name="cpf" /></label>
           <label>E-mail<input type="email" name="email" /></label>
           <label>Telefone<input type="tel" name="telefone" /></label>
           <label>Data de nascimento<input type="date" name="data_nascimento" /></label>
-          <label class="full-width">Endereço<textarea name="logradouro"></textarea></label>
-          <label>Número<input type="text" name="numero" /></label>
-          <label>Complemento<input type="text" name="complemento" /></label>
-          <label>Bairro<input type="text" name="bairro" /></label>
-          <label>Cidade<input type="text" name="cidade" /></label>
-          <label>Estado<input type="text" name="estado" /></label>
-          <label>CEP<input type="text" name="cep" /></label>
-          <label>País<input type="text" name="pais" value="Brasil" /></label>
         </form>
         <div class="actions">
           <button type="button" class="button primary" id="personal-save">Salvar dados pessoais</button>
@@ -129,7 +210,7 @@
         <div class="local-card">
           <div class="local-section-header">
             <h3>Histórico</h3>
-            <p class="muted">Pesquisa local.</p>
+            <p class="muted">Busca rápida.</p>
           </div>
           <label>Buscar<input type="search" id="consultation-search" placeholder="Médico, motivo, diagnóstico" /></label>
           <div class="table-shell">
@@ -154,7 +235,7 @@
     <section class="screen-block" data-screen="medications" hidden>
       <div class="local-section-header">
         <h2>Medicamentos</h2>
-        <p class="muted">Controle local de medicamentos em uso.</p>
+        <p class="muted">Controle seus medicamentos em uso.</p>
       </div>
       <div class="local-split">
         <div class="local-card">
@@ -178,7 +259,7 @@
         <div class="local-card">
           <div class="local-section-header">
             <h3>Lista</h3>
-            <p class="muted">Pesquisa local.</p>
+            <p class="muted">Busca rápida.</p>
           </div>
           <label>Buscar<input type="search" id="medication-search" placeholder="Nome, laboratório, dosagem" /></label>
           <div class="table-shell">
@@ -186,7 +267,7 @@
               <thead>
                 <tr>
                   <th>Nome</th>
-                  <th>Laboratório</th>
+                  <th>Periodicidade</th>
                   <th>Dosagem</th>
                   <th>Intervalo</th>
                   <th>Status</th>
@@ -203,38 +284,36 @@
     <section class="screen-block" data-screen="exams" hidden>
       <div class="local-section-header">
         <h2>Exames</h2>
-        <p class="muted">Definições, resultados e anexos mantidos no aparelho.</p>
+        <p class="muted">Cadastre exames, lance resultados e acompanhe a evolução.</p>
       </div>
-      <nav class="section-subnav" aria-label="Seções de exames">
-        <button type="button" class="button ghost" data-exam-panel-target="definition">Novo exame</button>
-        <button type="button" class="button ghost" data-exam-panel-target="result">Exame realizado</button>
-        <button type="button" class="button ghost" data-exam-panel-target="definitions-list">Exames cadastrados</button>
-        <button type="button" class="button ghost" data-exam-panel-target="results-list">Resultados</button>
-        <button type="button" class="button ghost" data-exam-panel-target="attachments">Anexos</button>
-      </nav>
+      <div class="section-menu">
+        <button type="button" class="button secondary section-menu-toggle" id="exam-panel-toggle" aria-expanded="false" aria-controls="exam-panel-menu">
+          <span>Seção</span>
+          <strong id="exam-panel-current">Cadastrar exame</strong>
+        </button>
+        <nav class="section-subnav" id="exam-panel-menu" aria-label="Seções de exames" hidden>
+          <button type="button" class="button ghost" data-exam-panel-target="definition">Cadastrar exame</button>
+          <button type="button" class="button ghost" data-exam-panel-target="result">Lançar resultado</button>
+          <button type="button" class="button ghost" data-exam-panel-target="evolution">Evolução</button>
+          <button type="button" class="button ghost" data-exam-panel-target="definitions-list">Exames cadastrados</button>
+          <button type="button" class="button ghost" data-exam-panel-target="results-list">Resultados</button>
+          <button type="button" class="button ghost" data-exam-panel-target="attachments">Anexos</button>
+        </nav>
+      </div>
       <div class="local-stack">
         <div class="local-card exam-panel" data-exam-panel="definition">
           <div class="local-section-header">
             <h3>Cadastro de exame</h3>
-            <p class="muted">Definição do exame.</p>
+            <p class="muted">Informe o nome e a faixa de referência para comparar os resultados futuros.</p>
           </div>
           <form id="exam-definition-form" class="grid-form">
-            <label>Tipo
-              <select name="tipo_exame" required>
-                <option value="">Selecione</option>
-                <option value="laboratorial">Laboratorial</option>
-                <option value="imagem">Imagem</option>
-                <option value="clinico">Clínico</option>
-              </select>
-            </label>
+            <input type="hidden" name="tipo_exame" value="laboratorial" />
             <label>Nome do exame<input type="text" name="nome_exame" required /></label>
             <label>Unidade<input type="text" name="unidade" /></label>
             <label>Referência mínima<input type="number" step="0.01" name="referencia_min" /></label>
             <label>Referência máxima<input type="number" step="0.01" name="referencia_max" /></label>
-            <label>Frequência<input type="text" name="frequencia" /></label>
-            <label>Laboratório<input type="text" name="laboratorio" /></label>
+            <label>Periodicidade<input type="text" name="frequencia" placeholder="Ex: anual, semestral" /></label>
             <label class="full-width">Observações<textarea name="observacoes"></textarea></label>
-            <label>Data prevista<input type="date" name="data_realizacao" /></label>
           </form>
           <div class="actions">
             <button type="button" class="button primary" id="exam-definition-save">Salvar exame</button>
@@ -245,17 +324,18 @@
         <div class="local-card exam-panel" data-exam-panel="result" hidden>
           <div class="local-section-header">
             <h3>Resultado do exame</h3>
-            <p class="muted">Anexos ficam dentro do app quando o plugin nativo estiver ativo.</p>
+            <p class="muted">Busque o exame cadastrado e lance cada realização com data, resultado e local.</p>
           </div>
           <form id="exam-result-form" class="grid-form">
+            <label class="full-width">Buscar exame<input type="search" id="result-exam-search" placeholder="Digite para filtrar exames cadastrados" /></label>
             <label>Exame
               <select id="result-exam-id" name="exame_id" required>
                 <option value="">Selecione um exame</option>
               </select>
             </label>
             <label>Data da coleta<input type="date" name="data_coleta" required /></label>
-            <label id="result-value-field">Valor do resultado<input type="number" step="0.01" name="valor" /></label>
-            <label>Laboratório do resultado<input type="text" name="laboratorio" /></label>
+            <label id="result-value-field">Resultado<input type="number" step="0.01" name="valor" required /></label>
+            <label>Local/Laboratório<input type="text" name="laboratorio" /></label>
             <label class="full-width">Observações<textarea name="observacoes"></textarea></label>
             <label class="full-width">Anexos (PDF, PNG, JPG)<input type="file" id="result-attachments" accept=".pdf,image/png,image/jpeg" multiple /></label>
           </form>
@@ -265,10 +345,19 @@
           <div id="exam-result-feedback" class="form-feedback" hidden></div>
         </div>
 
+        <div class="local-card exam-panel" data-exam-panel="evolution" hidden>
+          <div class="local-section-header">
+            <h3>Evolução dos exames</h3>
+            <p class="muted">Acompanhe a tendência dos resultados em relação à faixa de referência.</p>
+          </div>
+          <label>Buscar exame<input type="search" id="evolution-search" placeholder="Nome do exame" /></label>
+          <div id="exam-evolution-list" class="evolution-grid"></div>
+        </div>
+
         <div class="local-card exam-panel" data-exam-panel="definitions-list" hidden>
           <div class="local-section-header">
             <h3>Exames cadastrados</h3>
-            <p class="muted">Pesquisa local.</p>
+            <p class="muted">Busca rápida.</p>
           </div>
           <label>Buscar<input type="search" id="exam-search" placeholder="Nome, tipo, laboratório" /></label>
           <div class="table-shell">
@@ -298,7 +387,7 @@
 
         <div class="local-card exam-panel" data-exam-panel="attachments" hidden>
           <div class="local-section-header">
-            <h3>Anexos salvos no dispositivo</h3>
+            <h3>Anexos</h3>
           </div>
           <div id="attachments-list" class="attachment-grid-local"></div>
         </div>
@@ -309,12 +398,11 @@
       <div class="local-card">
         <div class="local-section-header">
           <h2>Privacidade</h2>
-          <p class="muted">Versão local e pessoal do app.</p>
+          <p class="muted">Controle e proteção das suas informações.</p>
         </div>
         <div class="local-stack">
-          <p>Este aplicativo opera localmente no dispositivo e não envia exames, consultas, medicamentos ou anexos para backend web.</p>
-          <p>Os registros ficam vinculados ao armazenamento privado do app neste aparelho. Anexos usam a área privada do app quando o plugin nativo de arquivos está disponível.</p>
-          <p>Isso reduz risco técnico, mas não substitui governança, política de privacidade verdadeira, atendimento a direitos do titular e revisão jurídica da LGPD.</p>
+          <p>Suas informações são usadas para organizar seus registros de saúde no aplicativo.</p>
+          <p>Revise periodicamente seus dados e mantenha o bloqueio de tela ativo.</p>
         </div>
       </div>
     </section>

@@ -17,6 +17,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 
   const appOwner = $('#app-owner');
   if (appOwner) {
@@ -29,6 +35,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const examPanels = $$('[data-exam-panel]');
   const menuToggle = $('#app-menu-toggle');
   const appNav = $('#app-nav');
+  const examPanelToggle = $('#exam-panel-toggle');
+  const examPanelMenu = $('#exam-panel-menu');
+  const examPanelCurrent = $('#exam-panel-current');
+  const examPanelLabels = {
+    definition: 'Cadastrar exame',
+    result: 'Lançar resultado',
+    evolution: 'Evolução',
+    'definitions-list': 'Exames cadastrados',
+    'results-list': 'Resultados',
+    attachments: 'Anexos',
+  };
 
   const setMenuOpen = (isOpen) => {
     if (!appNav || !menuToggle) return;
@@ -36,6 +53,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     appNav.classList.toggle('is-open', isOpen);
     menuToggle.classList.toggle('is-open', isOpen);
     menuToggle.setAttribute('aria-expanded', String(isOpen));
+    document.body.classList.toggle('menu-is-open', isOpen);
+  };
+
+  const setExamMenuOpen = (isOpen) => {
+    if (!examPanelMenu || !examPanelToggle) return;
+    examPanelMenu.hidden = !isOpen;
+    examPanelMenu.classList.toggle('is-open', isOpen);
+    examPanelToggle.classList.toggle('is-open', isOpen);
+    examPanelToggle.setAttribute('aria-expanded', String(isOpen));
   };
 
   const activateScreen = (name) => {
@@ -46,6 +72,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       button.classList.toggle('is-active', button.dataset.screenTarget === name);
     });
     setMenuOpen(false);
+    if (name === 'alerts') {
+      renderAlerts();
+    }
+    if (name === 'doctor-mode') {
+      renderDoctorMode();
+    }
+    if (name === 'pre-consultation') {
+      renderPreConsultation();
+    }
     window.history.replaceState({}, '', `index.html?screen=${encodeURIComponent(name)}`);
   };
 
@@ -57,6 +92,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     examPanelButtons.forEach((button) => {
       button.classList.toggle('is-active', button.dataset.examPanelTarget === name);
     });
+    if (examPanelCurrent) {
+      examPanelCurrent.textContent = examPanelLabels[name] || 'Exames';
+    }
+    setExamMenuOpen(false);
+    if (name === 'evolution') {
+      renderExamEvolution();
+    }
   };
 
   screenButtons.forEach((button) => {
@@ -68,19 +110,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.addEventListener('click', (event) => {
-    if (!appNav || appNav.hidden) return;
-    if (appNav.contains(event.target) || menuToggle?.contains(event.target)) return;
-    setMenuOpen(false);
+    if (appNav && !appNav.hidden && !appNav.contains(event.target) && !menuToggle?.contains(event.target)) {
+      setMenuOpen(false);
+    }
+    if (examPanelMenu && !examPanelMenu.hidden && !examPanelMenu.contains(event.target) && !examPanelToggle?.contains(event.target)) {
+      setExamMenuOpen(false);
+    }
   });
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       setMenuOpen(false);
+      setExamMenuOpen(false);
     }
   });
 
   examPanelButtons.forEach((button) => {
     button.addEventListener('click', () => activateExamPanel(button.dataset.examPanelTarget));
+  });
+
+  examPanelToggle?.addEventListener('click', () => {
+    setExamMenuOpen(examPanelMenu?.hidden !== false);
   });
 
   $('#logout-btn')?.addEventListener('click', () => {
@@ -107,6 +157,55 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const getFormData = (form) => Object.fromEntries(new FormData(form).entries());
 
+  const toNumber = (value) => {
+    const number = Number(String(value ?? '').replace(',', '.'));
+    return Number.isFinite(number) ? number : null;
+  };
+
+  const getReferenceStatus = (item) => {
+    const value = toNumber(item.valor ?? item.valor_numero);
+    const min = toNumber(item.referencia_min);
+    const max = toNumber(item.referencia_max);
+    if (value === null || (min === null && max === null)) {
+      return {
+        key: 'none',
+        label: 'Sem referência',
+      };
+    }
+    if (min !== null && value < min) {
+      return {
+        key: 'low',
+        label: 'Abaixo da referência',
+      };
+    }
+    if (max !== null && value > max) {
+      return {
+        key: 'high',
+        label: 'Acima da referência',
+      };
+    }
+    return {
+      key: 'ok',
+      label: 'Dentro da referência',
+    };
+  };
+
+  const referenceBadge = (status) => `<span class="reference-badge is-${status.key}">${status.label}</span>`;
+
+  const getLatestExamAlerts = () => app.store.listExamEvolution().map((exam) => {
+    const latest = exam.latest;
+    const status = getReferenceStatus({
+      ...exam,
+      valor: latest?.valor,
+      valor_numero: latest?.valor_numero,
+    });
+    return {
+      ...exam,
+      latest,
+      status,
+    };
+  }).filter((exam) => exam.latest && ['low', 'high'].includes(exam.status.key));
+
   const formatDate = (value, includeTime = false) => {
     if (!value) return '—';
     const date = new Date(value);
@@ -125,13 +224,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('#stat-consultations').textContent = String(data.consultations);
     $('#stat-medications').textContent = String(data.medications);
     $('#stat-attachments').textContent = String(data.attachments);
+    const alertStat = $('#stat-alerts');
+    if (alertStat) {
+      alertStat.textContent = String(getLatestExamAlerts().length);
+    }
   };
 
   const personalForm = $('#personal-form');
   const profileForm = $('#profile-form');
+  const preConsultationForm = $('#preconsultation-form');
   await app.store.init();
   fillForm(personalForm, app.store.getPersonal());
   fillForm(profileForm, app.store.getProfile());
+  fillForm(preConsultationForm, app.store.getPreConsultation?.());
 
   $('#personal-save')?.addEventListener('click', async () => {
     if (!personalForm.checkValidity()) {
@@ -139,12 +244,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     await app.store.savePersonal(getFormData(personalForm));
-    showMessage($('#personal-feedback'), 'Dados pessoais salvos no dispositivo.');
+    showMessage($('#personal-feedback'), 'Dados pessoais salvos.');
   });
 
   $('#profile-save')?.addEventListener('click', async () => {
     await app.store.saveProfile(getFormData(profileForm));
-    showMessage($('#profile-feedback'), 'Perfil salvo no dispositivo.');
+    showMessage($('#profile-feedback'), 'Perfil salvo.');
+  });
+
+  $('#preconsultation-save')?.addEventListener('click', async () => {
+    await app.store.savePreConsultation(getFormData(preConsultationForm));
+    showMessage($('#preconsultation-feedback'), 'Pré-consulta salva.');
   });
 
   const consultationForm = $('#consultation-form');
@@ -193,8 +303,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     await app.store.saveConsultation(payload);
     state.consultationEditId = '';
     consultationForm.reset();
-    showMessage($('#consultation-feedback'), 'Consulta salva localmente.');
+    showMessage($('#consultation-feedback'), 'Consulta salva.');
     renderConsultations();
+    renderDoctorMode();
     renderDashboard();
   });
 
@@ -247,8 +358,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.medicationEditId = '';
     medicationForm.reset();
     medicationForm.querySelector('[name="status"]').value = 'Em Uso';
-    showMessage($('#medication-feedback'), 'Medicamento salvo localmente.');
+    showMessage($('#medication-feedback'), 'Medicamento salvo.');
     renderMedications();
+    renderDoctorMode();
+    renderPreConsultation();
     renderDashboard();
   });
 
@@ -258,15 +371,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const examResultForm = $('#exam-result-form');
   const examSelect = $('#result-exam-id');
   const examValueField = $('#result-value-field');
+  const resultExamSearch = $('#result-exam-search');
+  const evolutionSearch = $('#evolution-search');
 
   const refreshExamSelect = () => {
     const currentValue = examSelect.value;
-    const rows = app.store.listExamDefinitions();
+    const search = (resultExamSearch?.value || '').trim().toLowerCase();
+    const rows = app.store.listExamDefinitions().filter((item) => {
+      const text = `${item.nome} ${item.unidade} ${item.frequencia}`.toLowerCase();
+      return !search || text.includes(search);
+    });
     examSelect.innerHTML = '<option value="">Selecione um exame</option>';
     rows.forEach((item) => {
       const option = document.createElement('option');
       option.value = item.id;
-      option.textContent = `${item.nome} (${item.tipo || 'geral'})`;
+      option.textContent = `${item.nome}${item.unidade ? ` (${item.unidade})` : ''}`;
       option.dataset.tipo = item.tipo || '';
       examSelect.appendChild(option);
     });
@@ -297,7 +416,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${item.tipo || '—'}</td>
         <td>${item.unidade || '—'}</td>
         <td>${item.referencia_min || '—'} / ${item.referencia_max || '—'}</td>
-        <td>${item.laboratorio || '—'}</td>
+        <td>${item.frequencia || '—'}</td>
         <td><button type="button" class="button ghost" data-edit-exam="${item.id}">Editar</button></td>
       `;
       tbody.appendChild(tr);
@@ -337,8 +456,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       container.innerHTML = '<div class="empty-state">Nenhum resultado registrado.</div>';
     } else {
       results.forEach((item) => {
+        const status = getReferenceStatus(item);
         const article = document.createElement('article');
-        article.className = 'local-card';
+        article.className = `local-card result-card is-${status.key}`;
         const attachmentHtml = item.attachments.length
           ? `<div class="attachment-inline-list">${item.attachments.map((attachment) => `
               <button type="button" class="button ghost" data-open-attachment="${attachment.id}">
@@ -347,9 +467,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             `).join('')}</div>`
           : '<p class="muted">Sem anexos.</p>';
         article.innerHTML = `
-          <h3>${item.exame_nome}</h3>
+          <div class="result-card-header">
+            <h3>${item.exame_nome}</h3>
+            ${referenceBadge(status)}
+          </div>
           <p class="muted">${item.exame_tipo || 'geral'} • ${formatDate(item.data_coleta)}</p>
           <p><strong>Valor:</strong> ${item.valor || '—'} ${item.unidade || ''}</p>
+          <p><strong>Referência:</strong> ${item.referencia_min || '—'} / ${item.referencia_max || '—'} ${item.unidade || ''}</p>
           <p><strong>Laboratório:</strong> ${item.laboratorio || '—'}</p>
           <p><strong>Observações:</strong> ${item.observacoes || '—'}</p>
           ${attachmentHtml}
@@ -360,7 +484,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     attachmentsContainer.innerHTML = '';
     if (!attachments.length) {
-      attachmentsContainer.innerHTML = '<div class="empty-state">Nenhum anexo salvo no dispositivo.</div>';
+      attachmentsContainer.innerHTML = '<div class="empty-state">Nenhum anexo salvo.</div>';
     } else {
       attachments.forEach((item) => {
         const article = document.createElement('article');
@@ -393,7 +517,250 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   };
 
+  const buildSparkline = (exam) => {
+    const width = 320;
+    const height = 148;
+    const padding = 22;
+    const values = exam.results.map((result) => result.valor_numero);
+    const refMin = Number(String(exam.referencia_min || '').replace(',', '.'));
+    const refMax = Number(String(exam.referencia_max || '').replace(',', '.'));
+    const domainValues = [...values];
+    if (Number.isFinite(refMin)) domainValues.push(refMin);
+    if (Number.isFinite(refMax)) domainValues.push(refMax);
+    const minValue = Math.min(...domainValues);
+    const maxValue = Math.max(...domainValues);
+    const range = maxValue - minValue || 1;
+    const xFor = (index) => {
+      if (exam.results.length === 1) return width / 2;
+      return padding + (index * (width - padding * 2)) / (exam.results.length - 1);
+    };
+    const yFor = (value) => height - padding - ((value - minValue) * (height - padding * 2)) / range;
+    const points = values.map((value, index) => `${xFor(index)},${yFor(value)}`).join(' ');
+    const refLines = [refMin, refMax]
+      .filter((value) => Number.isFinite(value))
+      .map((value) => {
+        const y = yFor(value);
+        return `<line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" class="chart-ref-line" />`;
+      })
+      .join('');
+    const circles = values.map((value, index) => {
+      const date = formatDate(exam.results[index].data_coleta);
+      return `<circle cx="${xFor(index)}" cy="${yFor(value)}" r="3.5"><title>${date}: ${value} ${escapeHtml(exam.unidade)}</title></circle>`;
+    }).join('');
+
+    return `
+      <svg class="evolution-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Evolução de ${escapeHtml(exam.nome)}">
+        <rect x="0" y="0" width="${width}" height="${height}" rx="8" />
+        ${refLines}
+        <polyline points="${points}" />
+        ${circles}
+      </svg>
+    `;
+  };
+
+  const renderExamEvolution = () => {
+    const container = $('#exam-evolution-list');
+    if (!container) return;
+    const search = (evolutionSearch?.value || '').trim().toLowerCase();
+    const rows = app.store.listExamEvolution().filter((exam) => {
+      const text = `${exam.nome} ${exam.unidade} ${exam.frequencia}`.toLowerCase();
+      return !search || text.includes(search);
+    });
+
+    container.innerHTML = '';
+    if (!rows.length) {
+      container.innerHTML = '<div class="empty-state">Nenhuma evolução disponível. Cadastre um exame e lance pelo menos um resultado numérico.</div>';
+      return;
+    }
+
+    rows.forEach((exam) => {
+      const latest = exam.latest;
+      const latestValue = latest ? `${latest.valor} ${exam.unidade || ''}`.trim() : '—';
+      const latestDate = latest ? formatDate(latest.data_coleta) : '—';
+      const status = getReferenceStatus({
+        ...exam,
+        valor: latest?.valor,
+        valor_numero: latest?.valor_numero,
+      });
+      const article = document.createElement('article');
+      article.className = `evolution-card is-${status.key}`;
+      article.innerHTML = `
+        <div class="evolution-card-header">
+          <div>
+            <h3>${escapeHtml(exam.nome)}</h3>
+            <p class="muted">${exam.results.length} resultados • Último em ${latestDate}</p>
+          </div>
+          <div class="evolution-latest">
+            ${referenceBadge(status)}
+            <strong>${escapeHtml(latestValue)}</strong>
+          </div>
+        </div>
+        ${buildSparkline(exam)}
+        <div class="evolution-meta">
+          <span>Referência: ${escapeHtml(exam.referencia_min || '—')} / ${escapeHtml(exam.referencia_max || '—')} ${escapeHtml(exam.unidade || '')}</span>
+          <span>Menor: ${Math.min(...exam.results.map((result) => result.valor_numero))} ${escapeHtml(exam.unidade || '')}</span>
+          <span>Maior: ${Math.max(...exam.results.map((result) => result.valor_numero))} ${escapeHtml(exam.unidade || '')}</span>
+        </div>
+      `;
+      container.appendChild(article);
+    });
+  };
+
+  const renderAlerts = () => {
+    const container = $('#exam-alert-list');
+    if (!container) return;
+    const alerts = getLatestExamAlerts();
+
+    container.innerHTML = '';
+    if (!alerts.length) {
+      container.innerHTML = '<div class="empty-state">Nenhum exame com resultado recente fora da referência.</div>';
+      return;
+    }
+
+    alerts.forEach((exam) => {
+      const latest = exam.latest;
+      const value = `${latest.valor} ${exam.unidade || ''}`.trim();
+      const article = document.createElement('article');
+      article.className = `alert-card is-${exam.status.key}`;
+      article.innerHTML = `
+        <div class="alert-card-header">
+          <div>
+            <h3>${escapeHtml(exam.nome)}</h3>
+            <p class="muted">Último resultado em ${formatDate(latest.data_coleta)}</p>
+          </div>
+          ${referenceBadge(exam.status)}
+        </div>
+        <p><strong>Resultado:</strong> ${escapeHtml(value || '—')}</p>
+        <p><strong>Referência:</strong> ${escapeHtml(exam.referencia_min || '—')} / ${escapeHtml(exam.referencia_max || '—')} ${escapeHtml(exam.unidade || '')}</p>
+        <p><strong>Local:</strong> ${escapeHtml(latest.laboratorio || '—')}</p>
+        <p class="alert-advice">Tenha atenção a este resultado e considere repetir o exame em breve.</p>
+      `;
+      container.appendChild(article);
+    });
+  };
+
+  const renderCompactAlerts = (container, alerts) => {
+    if (!container) return;
+    container.innerHTML = '';
+    if (!alerts.length) {
+      container.innerHTML = '<div class="empty-state">Nenhum exame alterado no último resultado.</div>';
+      return;
+    }
+
+    alerts.forEach((exam) => {
+      const latest = exam.latest;
+      const value = `${latest.valor} ${exam.unidade || ''}`.trim();
+      const article = document.createElement('article');
+      article.className = `compact-item is-${exam.status.key}`;
+      article.innerHTML = `
+        <div>
+          <h4>${escapeHtml(exam.nome)}</h4>
+          <p>${formatDate(latest.data_coleta)} • ${escapeHtml(value || '—')}</p>
+          <p>Referência: ${escapeHtml(exam.referencia_min || '—')} / ${escapeHtml(exam.referencia_max || '—')} ${escapeHtml(exam.unidade || '')}</p>
+        </div>
+        ${referenceBadge(exam.status)}
+      `;
+      container.appendChild(article);
+    });
+  };
+
+  const renderMedicationCompactList = (container) => {
+    if (!container) return;
+    const rows = app.store.listMedications().filter((item) => item.status !== 'Suspenso');
+    container.innerHTML = '';
+    if (!rows.length) {
+      container.innerHTML = '<div class="empty-state">Nenhum medicamento em uso cadastrado.</div>';
+      return;
+    }
+    rows.forEach((item) => {
+      const article = document.createElement('article');
+      article.className = 'compact-item';
+      article.innerHTML = `
+        <div>
+          <h4>${escapeHtml(item.nome || 'Medicamento')}</h4>
+          <p>${escapeHtml(item.dosagem || '—')} • ${escapeHtml(item.intervalo || 'Sem intervalo')}</p>
+          <p>${escapeHtml(item.laboratorio || '')}</p>
+        </div>
+      `;
+      container.appendChild(article);
+    });
+  };
+
+  const renderDoctorMode = () => {
+    const alerts = getLatestExamAlerts();
+    renderCompactAlerts($('#doctor-alerts'), alerts);
+    renderMedicationCompactList($('#doctor-medications'));
+
+    const consultationsContainer = $('#doctor-consultations');
+    if (consultationsContainer) {
+      const consultations = app.store.listConsultations().slice(0, 3);
+      consultationsContainer.innerHTML = '';
+      if (!consultations.length) {
+        consultationsContainer.innerHTML = '<div class="empty-state">Nenhuma consulta recente cadastrada.</div>';
+      } else {
+        consultations.forEach((item) => {
+          const article = document.createElement('article');
+          article.className = 'compact-item';
+          article.innerHTML = `
+            <div>
+              <h4>${escapeHtml(item.medico || 'Consulta')}</h4>
+              <p>${formatDate(item.data_consulta)} • ${escapeHtml(item.status || '—')}</p>
+              <p>${escapeHtml(item.motivo || item.diagnostico || 'Sem observações.')}</p>
+            </div>
+          `;
+          consultationsContainer.appendChild(article);
+        });
+      }
+    }
+
+    const evolutionContainer = $('#doctor-evolution');
+    if (evolutionContainer) {
+      const alertIds = new Set(alerts.map((item) => item.id));
+      const rows = [
+        ...alerts,
+        ...app.store.listExamEvolution().filter((item) => !alertIds.has(item.id)),
+      ].slice(0, 3);
+      evolutionContainer.innerHTML = '';
+      if (!rows.length) {
+        evolutionContainer.innerHTML = '<div class="empty-state">Nenhuma evolução disponível.</div>';
+      } else {
+        rows.forEach((exam) => {
+          const latest = exam.latest;
+          const status = getReferenceStatus({
+            ...exam,
+            valor: latest?.valor,
+            valor_numero: latest?.valor_numero,
+          });
+          const article = document.createElement('article');
+          article.className = `evolution-card is-${status.key}`;
+          article.innerHTML = `
+            <div class="evolution-card-header">
+              <div>
+                <h3>${escapeHtml(exam.nome)}</h3>
+                <p class="muted">${exam.results.length} resultados • Último em ${formatDate(latest?.data_coleta)}</p>
+              </div>
+              <div class="evolution-latest">
+                ${referenceBadge(status)}
+                <strong>${escapeHtml(`${latest?.valor || '—'} ${exam.unidade || ''}`.trim())}</strong>
+              </div>
+            </div>
+            ${buildSparkline(exam)}
+          `;
+          evolutionContainer.appendChild(article);
+        });
+      }
+    }
+  };
+
+  const renderPreConsultation = () => {
+    const alerts = getLatestExamAlerts();
+    renderCompactAlerts($('#preconsult-alerts'), alerts);
+    renderMedicationCompactList($('#preconsult-medications'));
+    fillForm(preConsultationForm, app.store.getPreConsultation?.());
+  };
+
   examSelect?.addEventListener('change', refreshExamSelect);
+  resultExamSearch?.addEventListener('input', refreshExamSelect);
 
   $('#exam-definition-save')?.addEventListener('click', async () => {
     if (!examDefinitionForm.checkValidity()) {
@@ -405,9 +772,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     await app.store.saveExamDefinition(payload);
     state.examEditId = '';
     examDefinitionForm.reset();
-    showMessage($('#exam-feedback'), 'Exame salvo localmente.');
+    showMessage($('#exam-feedback'), 'Exame salvo.');
     renderExamDefinitions();
     renderExamResults();
+    renderExamEvolution();
+    renderAlerts();
+    renderDoctorMode();
+    renderPreConsultation();
     renderDashboard();
     activateExamPanel('definitions-list');
   });
@@ -423,10 +794,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       await app.store.saveExamResult(payload, files);
       examResultForm.reset();
       refreshExamSelect();
-      showMessage($('#exam-result-feedback'), 'Resultado e anexos salvos no dispositivo.');
+      showMessage($('#exam-result-feedback'), 'Resultado e anexos salvos.');
       renderExamResults();
+      renderExamEvolution();
+      renderAlerts();
+      renderDoctorMode();
+      renderPreConsultation();
       renderDashboard();
-      activateExamPanel('results-list');
+      activateExamPanel('evolution');
     } catch (error) {
       showMessage($('#exam-result-feedback'), error instanceof Error ? error.message : 'Falha ao salvar resultado.', 'error');
     }
@@ -434,6 +809,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   $('#exam-search')?.addEventListener('input', renderExamDefinitions);
   $('#result-search')?.addEventListener('input', renderExamResults);
+  evolutionSearch?.addEventListener('input', renderExamEvolution);
 
   const initialScreen = new URLSearchParams(window.location.search).get('screen') || 'dashboard';
 
@@ -442,6 +818,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderMedications();
   renderExamDefinitions();
   renderExamResults();
+  renderExamEvolution();
+  renderAlerts();
+  renderDoctorMode();
+  renderPreConsultation();
   activateScreen(initialScreen);
   activateExamPanel(state.examPanel);
 });

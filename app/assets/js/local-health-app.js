@@ -8,6 +8,7 @@
     version: DB_VERSION,
     personal: {},
     profile: {},
+    preConsultation: {},
     exams: [],
     examResults: [],
     attachments: [],
@@ -392,7 +393,8 @@
       const alreadyMigrated = await this.readMetaValue('migration_v1_done');
       const hasLegacyData = legacy.exams.length || legacy.examResults.length || legacy.attachments.length ||
         legacy.consultations.length || legacy.medications.length ||
-        Object.keys(legacy.personal || {}).length || Object.keys(legacy.profile || {}).length;
+        Object.keys(legacy.personal || {}).length || Object.keys(legacy.profile || {}).length ||
+        Object.keys(legacy.preConsultation || {}).length;
 
       if (alreadyMigrated === '1' || !hasLegacyData) {
         await this.writeMetaValue('migration_v1_done', '1');
@@ -404,6 +406,9 @@
       }
       if (Object.keys(legacy.profile || {}).length) {
         await this.writeJsonMeta('profile', legacy.profile);
+      }
+      if (Object.keys(legacy.preConsultation || {}).length) {
+        await this.writeJsonMeta('preConsultation', legacy.preConsultation);
       }
       if (legacy.security) {
         await this.writeJsonMeta('security', legacy.security);
@@ -595,6 +600,7 @@
         version: DB_VERSION,
         personal: await this.readJsonMeta('personal'),
         profile: await this.readJsonMeta('profile'),
+        preConsultation: await this.readJsonMeta('preConsultation'),
         exams: sortByNewest(await this.query('SELECT * FROM exams ORDER BY nome COLLATE NOCASE ASC'), 'nome'),
         examResults: sortByNewest(await this.query('SELECT * FROM exam_results ORDER BY updated_at DESC')),
         attachments: sortByNewest(await this.query('SELECT * FROM attachments ORDER BY created_at DESC'), 'created_at'),
@@ -660,8 +666,10 @@
 
     async savePersonal(payload) {
       state.personal = {
-        ...state.personal,
-        ...payload,
+        nome: payload.nome || '',
+        email: payload.email || '',
+        telefone: payload.telefone || '',
+        data_nascimento: payload.data_nascimento || '',
         updated_at: nowIso(),
       };
       if (db.native) {
@@ -688,6 +696,24 @@
         saveLegacyState();
       }
       return this.getProfile();
+    },
+
+    getPreConsultation() {
+      return clone(state.preConsultation || {});
+    },
+
+    async savePreConsultation(payload) {
+      state.preConsultation = {
+        observacoes: payload.observacoes || '',
+        perguntas: payload.perguntas || '',
+        updated_at: nowIso(),
+      };
+      if (db.native) {
+        await db.writeJsonMeta('preConsultation', state.preConsultation);
+      } else {
+        saveLegacyState();
+      }
+      return this.getPreConsultation();
     },
 
     listConsultations() {
@@ -940,6 +966,25 @@
           attachments,
         };
       });
+    },
+
+    listExamEvolution() {
+      return this.listExamDefinitions().map((exam) => {
+        const results = state.examResults
+          .filter((result) => result.exame_id === exam.id && String(result.valor || '').trim() !== '')
+          .map((result) => ({
+            ...clone(result),
+            valor_numero: Number(String(result.valor).replace(',', '.')),
+          }))
+          .filter((result) => Number.isFinite(result.valor_numero))
+          .sort((a, b) => String(a.data_coleta || '').localeCompare(String(b.data_coleta || '')));
+
+        return {
+          ...clone(exam),
+          results,
+          latest: results[results.length - 1] || null,
+        };
+      }).filter((exam) => exam.results.length);
     },
 
     listAttachments(filterExamId) {
