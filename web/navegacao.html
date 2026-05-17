@@ -5,9 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Navegação – Prontuário</title>
   <link rel="stylesheet" href="assets/styles/web.css" />
-  <link rel="stylesheet" href="assets/styles/app-overrides.css" />
+  <link rel="stylesheet" href="assets/styles/app-overrides.css?v=20260510-nav3" />
 </head>
-<body class="web-mode">
+<body class="web-mode nav-page">
+  <script>
+    (function () {
+      const ua = navigator.userAgent || '';
+      const isCapacitor = typeof window !== 'undefined' && (window.Capacitor || /Capacitor/i.test(ua));
+      if (isCapacitor) {
+        document.body.classList.add('app-mode');
+        document.body.classList.remove('web-mode');
+      }
+    })();
+  </script>
+  <header class="site-header">
+    <div class="site-logo">
+      <img src="../logo.png" alt="Logo Meu Prontuário" />
+      <span>Meu Prontuário Médico</span>
+    </div>
+    <button class="nav-toggle" type="button" aria-label="Abrir navegação" aria-expanded="false" aria-controls="site-nav">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </button>
+    <nav id="site-nav" class="site-nav" aria-label="Navegação principal">
+      <a href="index.php" data-short="Início"><span>Início</span></a>
+      <a href="dados-paciente.php" data-short="Paciente"><span>Dados do paciente</span></a>
+      <a href="cadastro-exames.php" data-short="Exames"><span>Cadastro exames</span></a>
+      <a href="cadastro-consultas.php" data-short="Consultas"><span>Cadastro consultas</span></a>
+      <a href="cadastro-exames-laboratoriais.php" data-short="Lab"><span>Lançamento exames laboratoriais</span></a>
+      <a href="cadastro-exames-imagem.php" data-short="Imagem"><span>Lançamento exames de imagem</span></a>
+      <a href="listagem-exames-cadastrados.php" data-short="Cadastrados"><span>Lista de exames cadastrados</span></a>
+      <a href="listagem-exames.php" data-short="Resultados"><span>Lista resultados laboratoriais</span></a>
+    </nav>
+  </header>
+  <script>
+    (function () {
+      const header = document.querySelector('.site-header');
+      const toggle = document.querySelector('.nav-toggle');
+      const nav = document.getElementById('site-nav');
+      if (!header || !toggle || !nav) return;
+
+      const setOpen = (isOpen) => {
+        header.classList.toggle('nav-open', isOpen);
+        toggle.setAttribute('aria-expanded', String(isOpen));
+        toggle.setAttribute('aria-label', isOpen ? 'Fechar navegação' : 'Abrir navegação');
+      };
+
+      toggle.addEventListener('click', () => {
+        setOpen(!header.classList.contains('nav-open'));
+      });
+
+      nav.addEventListener('click', (event) => {
+        if (event.target.closest('a')) setOpen(false);
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!header.contains(event.target)) setOpen(false);
+      });
+    })();
+  </script>
   <div class="wrapper">
     <header class="page-intro">
       <h1>Menu de navegação</h1>

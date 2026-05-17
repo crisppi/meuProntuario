@@ -31,7 +31,7 @@ function patientValue(string $key): string
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dados do Paciente – Prontuário</title>
   <link rel="stylesheet" href="assets/styles/web.css" />
-  <link rel="stylesheet" href="assets/styles/app-overrides.css" />
+  <link rel="stylesheet" href="assets/styles/app-overrides.css?v=20260510-nav3" />
 </head>
 <body class="web-mode">
   <?php include __DIR__ . '/header.php'; ?>
@@ -45,8 +45,8 @@ function patientValue(string $key): string
     <div class="card">
       <h2>Cadastro do paciente</h2>
 
-      <form id="patient-form">
-        <label>Nome completo
+      <form id="patient-form" class="patient-form">
+        <label class="wide">Nome completo
           <input type="text" name="nome" value="<?= patientValue('nome'); ?>" required />
         </label>
 
@@ -78,60 +78,27 @@ function patientValue(string $key): string
           <input type="text" name="tipo_sanguineo" value="<?= patientValue('tipo_sanguineo'); ?>" placeholder="Ex: O+ ou A-" />
         </label>
 
-        <label>Alergias conhecidas
+        <label class="wide">Alergias conhecidas
           <textarea name="alergias" rows="2"><?= patientValue('alergias'); ?></textarea>
         </label>
 
-        <label>Condições crônicas
+        <label class="wide">Condições crônicas
           <textarea name="condicoes_cronicas" rows="2"><?= patientValue('condicoes_cronicas'); ?></textarea>
         </label>
 
-        <label>Observações gerais
+        <label class="wide">Observações gerais
           <textarea name="observacoes" rows="3"><?= patientValue('observacoes'); ?></textarea>
-        </label>
-
-        <label>Endereço completo
-          <textarea name="logradouro" rows="3"><?= patientValue('logradouro'); ?></textarea>
-        </label>
-
-        <label>Número
-          <input type="text" name="numero" value="<?= patientValue('numero'); ?>" />
-        </label>
-
-        <label>Complemento
-          <input type="text" name="complemento" value="<?= patientValue('complemento'); ?>" />
-        </label>
-
-        <label>Bairro
-          <input type="text" name="bairro" value="<?= patientValue('bairro'); ?>" />
-        </label>
-
-        <label>Cidade
-          <input type="text" name="cidade" value="<?= patientValue('cidade'); ?>" />
-        </label>
-
-        <label>Estado
-          <input type="text" name="estado" value="<?= patientValue('estado'); ?>" />
-        </label>
-
-        <label>CEP
-          <input type="text" name="cep" value="<?= patientValue('cep'); ?>" />
-        </label>
-
-        <label>País
-          <input type="text" name="pais" value="<?= patientValue('pais') ?: 'Brasil'; ?>" />
         </label>
       </form>
 
       <div class="actions">
-        <button class="secondary" type="button" onclick="window.location.href='index.html'">Voltar</button>
+        <button class="secondary" type="button" onclick="window.location.href='navegacao.html'">Voltar</button>
         <button type="button" id="patient-submit">Salvar dados</button>
       </div>
 
       <?php if ($loadError): ?>
-        <div class="form-feedback error" style="opacity:1;">
-          Não foi possível carregar os dados diretamente do banco:<br>
-          <?= htmlspecialchars($loadError, ENT_QUOTES) ?>
+        <div class="form-feedback error load-warning" style="opacity:1;" title="<?= htmlspecialchars($loadError, ENT_QUOTES) ?>">
+          Não foi possível carregar os dados salvos.
         </div>
       <?php endif; ?>
 

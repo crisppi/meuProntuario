@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cadastro de Consultas – Prontuário</title>
   <link rel="stylesheet" href="assets/styles/web.css" />
-  <link rel="stylesheet" href="assets/styles/app-overrides.css" />
+  <link rel="stylesheet" href="assets/styles/app-overrides.css?v=20260510-nav3" />
 </head>
 <body class="web-mode">
   <?php include __DIR__ . '/header.php'; ?>
@@ -18,14 +18,6 @@
         <label>
           Data
           <input type="date" name="data_consulta" />
-        </label>
-        <label>
-          Hora início
-          <input type="time" name="hora_inicio" />
-        </label>
-        <label>
-          Hora fim
-          <input type="time" name="hora_fim" />
         </label>
         <label>
           Médico responsável

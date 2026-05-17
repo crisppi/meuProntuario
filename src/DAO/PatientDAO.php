@@ -13,8 +13,33 @@ final class PatientDAO extends BaseDAO
     public function loadLatest(): ?array
     {
         $pdo = $this->getConnection();
+
+        if (!$this->tableExists($pdo, 'pessoa')) {
+            return $this->loadLatestUsuario($pdo);
+        }
+
+        $patientSelect = $this->tableExists($pdo, 'paciente')
+            ? 'pa.paciente_id,
+                pa.peso,
+                pa.altura,
+                pa.tipo_sanguineo,
+                pa.alergias,
+                pa.condicoes_cronicas,
+                pa.observacoes'
+            : 'p.pessoa_id AS paciente_id,
+                NULL AS peso,
+                NULL AS altura,
+                NULL AS tipo_sanguineo,
+                NULL AS alergias,
+                NULL AS condicoes_cronicas,
+                NULL AS observacoes';
+
+        $patientJoin = $this->tableExists($pdo, 'paciente')
+            ? 'LEFT JOIN paciente pa ON pa.paciente_id = p.pessoa_id'
+            : '';
+
         $stmt = $pdo->query(
-            'SELECT
+            "SELECT
                 p.pessoa_id,
                 p.nome,
                 p.cpf,
@@ -29,17 +54,11 @@ final class PatientDAO extends BaseDAO
                 p.estado,
                 p.cep,
                 p.pais,
-                pa.paciente_id,
-                pa.peso,
-                pa.altura,
-                pa.tipo_sanguineo,
-                pa.alergias,
-                pa.condicoes_cronicas,
-                pa.observacoes
+                {$patientSelect}
              FROM pessoa p
-             LEFT JOIN paciente pa ON pa.paciente_id = p.pessoa_id
+             {$patientJoin}
              ORDER BY p.atualizado_em DESC, p.criado_em DESC
-             LIMIT 1'
+             LIMIT 1"
         );
 
         $row = $stmt->fetch();
@@ -51,6 +70,23 @@ final class PatientDAO extends BaseDAO
         $pdo = $this->getConnection();
         $pdo->beginTransaction();
         try {
+            if (!$this->tableExists($pdo, 'pessoa')) {
+                $latestId = $this->fetchLatestUsuarioId($pdo);
+                if ($latestId === null) {
+                    $pessoaId = $this->insertUsuario($pdo, $patient);
+                } else {
+                    $this->updateUsuario($pdo, $latestId, $patient);
+                    $pessoaId = $latestId;
+                }
+
+                if ($this->tableExists($pdo, 'paciente')) {
+                    $this->upsertPaciente($pdo, $pessoaId, $patient);
+                }
+
+                $pdo->commit();
+                return $pessoaId;
+            }
+
             $latestId = $this->fetchLatestPessoaId($pdo);
             if ($latestId === null) {
                 $pessoaId = $this->insertPessoa($pdo, $patient);
@@ -68,6 +104,67 @@ final class PatientDAO extends BaseDAO
         }
     }
 
+    private function loadLatestUsuario(PDO $pdo): ?array
+    {
+        $patientSelect = $this->tableExists($pdo, 'paciente')
+            ? 'pa.paciente_id,
+                pa.peso,
+                pa.altura,
+                pa.tipo_sanguineo,
+                pa.alergias,
+                pa.condicoes_cronicas,
+                pa.observacoes'
+            : 'u.usuario_id AS paciente_id,
+                NULL AS peso,
+                NULL AS altura,
+                NULL AS tipo_sanguineo,
+                NULL AS alergias,
+                NULL AS condicoes_cronicas,
+                NULL AS observacoes';
+
+        $patientJoin = $this->tableExists($pdo, 'paciente')
+            ? 'LEFT JOIN paciente pa ON pa.paciente_id = u.usuario_id'
+            : '';
+
+        $stmt = $pdo->query(
+            "SELECT
+                u.usuario_id AS pessoa_id,
+                u.nome,
+                u.cpf,
+                u.email,
+                u.telefone,
+                u.data_nascimento,
+                u.logradouro,
+                u.numero,
+                u.complemento,
+                u.bairro,
+                u.cidade,
+                u.estado,
+                u.cep,
+                u.pais,
+                {$patientSelect}
+             FROM tb_usuario u
+             {$patientJoin}
+             ORDER BY u.atualizado_em DESC, u.criado_em DESC
+             LIMIT 1"
+        );
+
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    private function tableExists(PDO $pdo, string $tableName): bool
+    {
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(*)
+             FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = :table_name'
+        );
+        $stmt->execute([':table_name' => $tableName]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     private function fetchLatestPessoaId(PDO $pdo): ?int
     {
         $stmt = $pdo->query('SELECT pessoa_id FROM pessoa ORDER BY atualizado_em DESC, criado_em DESC LIMIT 1');
@@ -77,6 +174,49 @@ final class PatientDAO extends BaseDAO
         }
 
         return (int)$value;
+    }
+
+    private function fetchLatestUsuarioId(PDO $pdo): ?int
+    {
+        $stmt = $pdo->query('SELECT usuario_id FROM tb_usuario ORDER BY atualizado_em DESC, criado_em DESC LIMIT 1');
+        $value = $stmt->fetchColumn();
+        if ($value === false) {
+            return null;
+        }
+
+        return (int)$value;
+    }
+
+    private function insertUsuario(PDO $pdo, Patient $patient): int
+    {
+        $stmt = $pdo->prepare(
+            'INSERT INTO tb_usuario (
+                nome, cpf, email, telefone, data_nascimento, criado_em, atualizado_em
+             ) VALUES (
+                :nome, :cpf, :email, :telefone, :data_nascimento, NOW(), NOW()
+             )'
+        );
+
+        $stmt->execute($this->usuarioParams($patient));
+        return (int)$pdo->lastInsertId();
+    }
+
+    private function updateUsuario(PDO $pdo, int $usuarioId, Patient $patient): void
+    {
+        $stmt = $pdo->prepare(
+            'UPDATE tb_usuario SET
+                nome = :nome,
+                cpf = :cpf,
+                email = :email,
+                telefone = :telefone,
+                data_nascimento = :data_nascimento,
+                atualizado_em = NOW()
+             WHERE usuario_id = :usuario_id'
+        );
+
+        $params = $this->usuarioParams($patient);
+        $params[':usuario_id'] = $usuarioId;
+        $stmt->execute($params);
     }
 
     private function insertPessoa(PDO $pdo, Patient $patient): int
@@ -157,6 +297,17 @@ final class PatientDAO extends BaseDAO
             ':estado' => $patient->estado,
             ':cep' => $patient->cep,
             ':pais' => $patient->pais ?? 'Brasil',
+        ];
+    }
+
+    private function usuarioParams(Patient $patient): array
+    {
+        return [
+            ':nome' => $patient->nome,
+            ':cpf' => $patient->cpf,
+            ':email' => $patient->email,
+            ':telefone' => $patient->telefone,
+            ':data_nascimento' => $patient->dataNascimento,
         ];
     }
 

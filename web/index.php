@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Prontuário Médico - Pessoa Física</title>
   <link rel="stylesheet" href="assets/styles/web.css" />
-  <link rel="stylesheet" href="assets/styles/app-overrides.css" />
+  <link rel="stylesheet" href="assets/styles/app-overrides.css?v=20260510-nav3" />
 </head>
-  <body class="web-mode">
+  <body class="web-mode exam-list-page">
     <?php include __DIR__ . '/header.php'; ?>
     <main class="site-shell">
       <div class="app-shell">

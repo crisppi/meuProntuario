@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lista de exames cadastrados – Prontuário</title>
   <link rel="stylesheet" href="assets/styles/web.css" />
-  <link rel="stylesheet" href="assets/styles/app-overrides.css" />
+  <link rel="stylesheet" href="assets/styles/app-overrides.css?v=20260510-nav3" />
 </head>
 
 <body class="web-mode">

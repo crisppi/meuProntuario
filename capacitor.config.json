@@ -1,10 +1,10 @@
 {
-  "appId": "com.exemplo.app",
+  "appId": "com.meuprontuario",
   "appName": "Prontuario",
   "webDir": "web",
   "bundledWebRuntime": false,
   "server": {
-    "url": "http://10.0.2.2/p/web/index.php",
+    "url": "http://10.0.2.2/meuProntuario/web/index.php",
     "cleartext": true
   }
 }
