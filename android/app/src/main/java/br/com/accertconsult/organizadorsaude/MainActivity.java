@@ -1,4 +1,4 @@
-package com.organizadordesaude;
+package br.com.accertconsult.organizadorsaude;
 
 import com.getcapacitor.BridgeActivity;
 

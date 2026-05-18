@@ -1,5 +1,5 @@
 {
-  "appId": "com.organizadordesaude",
+  "appId": "br.com.accertconsult.organizadorsaude",
   "appName": "Organizador de Saúde",
   "webDir": "app",
   "bundledWebRuntime": false
