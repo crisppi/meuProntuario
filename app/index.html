@@ -12,8 +12,8 @@
       <img class="app-local-logo" src="assets/images/logo.png" alt="" aria-hidden="true" />
       <div>
         <p class="app-kicker">Organizador de saúde</p>
-        <h1>Meu Prontuário</h1>
-        <p>Acompanhe consultas, exames, medicamentos e informações pessoais.</p>
+        <h1>Organizador de Saúde</h1>
+        <p>Acompanhe registros pessoais de consultas, exames, medicamentos e informações de rotina.</p>
       </div>
     </div>
     <button type="button" class="menu-toggle" id="app-menu-toggle" aria-expanded="false" aria-controls="app-nav">
@@ -27,8 +27,8 @@
   <nav class="app-local-nav" id="app-nav" aria-label="Módulos do aplicativo" hidden>
     <button type="button" class="button ghost" data-screen-target="dashboard">Dashboard</button>
     <button type="button" class="button ghost" data-screen-target="alerts">Alertas</button>
-    <button type="button" class="button ghost" data-screen-target="doctor-mode">Modo consulta</button>
-    <button type="button" class="button ghost" data-screen-target="pre-consultation">Pré-consulta</button>
+    <button type="button" class="button ghost" data-screen-target="doctor-mode">Resumo</button>
+    <button type="button" class="button ghost" data-screen-target="pre-consultation">Preparação</button>
     <button type="button" class="button ghost" data-screen-target="personal">Dados pessoais</button>
     <button type="button" class="button ghost" data-screen-target="profile">Perfil</button>
     <button type="button" class="button ghost" data-screen-target="consultations">Consultas</button>
@@ -42,7 +42,7 @@
     <section class="screen-block" data-screen="dashboard">
       <div class="local-section-header">
         <h2>Resumo geral</h2>
-        <p class="muted">Visualize rapidamente seus principais registros de saúde.</p>
+        <p class="muted">Visualize rapidamente seus registros pessoais de saúde.</p>
       </div>
       <div class="app-local-grid">
         <article class="local-stat-card"><span>Exames cadastrados</span><strong id="stat-exams">0</strong></article>
@@ -67,8 +67,8 @@
 
     <section class="screen-block" data-screen="doctor-mode" hidden>
       <div class="local-section-header">
-        <h2>Modo consulta</h2>
-        <p class="muted">Resumo limpo para mostrar durante o atendimento.</p>
+        <h2>Resumo pessoal</h2>
+        <p class="muted">Resumo organizado para consulta própria ou para mostrar durante um atendimento.</p>
       </div>
       <div class="local-stack doctor-summary">
         <div class="local-card">
@@ -91,7 +91,7 @@
         </div>
         <div class="local-card">
           <div class="local-section-header">
-            <h3>Consultas recentes</h3>
+            <h3>Atendimentos recentes</h3>
           </div>
           <div id="doctor-consultations" class="compact-list"></div>
         </div>
@@ -100,8 +100,8 @@
 
     <section class="screen-block" data-screen="pre-consultation" hidden>
       <div class="local-section-header">
-        <h2>Pré-consulta</h2>
-        <p class="muted">Organize os pontos principais antes do atendimento.</p>
+        <h2>Preparação</h2>
+        <p class="muted">Organize os pontos principais antes de conversar com um profissional de saúde.</p>
       </div>
       <div class="local-stack">
         <div class="local-card">
@@ -112,7 +112,7 @@
             <label><input type="checkbox" checked disabled /> Revisar exames alterados</label>
             <label><input type="checkbox" checked disabled /> Conferir medicamentos em uso</label>
             <label><input type="checkbox" checked disabled /> Anotar sintomas ou mudanças recentes</label>
-            <label><input type="checkbox" checked disabled /> Separar perguntas para o médico</label>
+            <label><input type="checkbox" checked disabled /> Separar perguntas para o profissional</label>
           </div>
         </div>
         <div class="local-card">
@@ -130,7 +130,7 @@
         <div class="local-card">
           <form id="preconsultation-form" class="grid-form">
             <label class="full-width">Observações para a consulta<textarea name="observacoes" placeholder="Sintomas, mudanças recentes, dúvidas gerais"></textarea></label>
-            <label class="full-width">Perguntas para o médico<textarea name="perguntas" placeholder="Ex: Preciso repetir algum exame? Ajustar medicamento?"></textarea></label>
+            <label class="full-width">Perguntas para o profissional<textarea name="perguntas" placeholder="Ex: Preciso revisar algum exame? Anotar alguma orientação recebida?"></textarea></label>
           </form>
           <div class="actions">
             <button type="button" class="button primary" id="preconsultation-save">Salvar pré-consulta</button>
@@ -183,7 +183,7 @@
     <section class="screen-block" data-screen="consultations" hidden>
       <div class="local-section-header">
         <h2>Consultas</h2>
-        <p class="muted">Registre e acompanhe seu histórico de atendimentos.</p>
+        <p class="muted">Registre e acompanhe seu histórico pessoal de atendimentos.</p>
       </div>
       <div class="local-split">
         <div class="local-card">
@@ -191,9 +191,9 @@
             <label>Data<input type="date" name="data_consulta" required /></label>
             <label>Hora início<input type="time" name="hora_inicio" /></label>
             <label>Hora fim<input type="time" name="hora_fim" /></label>
-            <label>Médico<input type="text" name="medico" /></label>
+            <label>Profissional<input type="text" name="medico" /></label>
             <label class="full-width">Motivo<textarea name="motivo"></textarea></label>
-            <label class="full-width">Diagnóstico<textarea name="diagnostico"></textarea></label>
+            <label class="full-width">Observações do atendimento<textarea name="diagnostico"></textarea></label>
             <label>Status
               <select name="status">
                 <option value="agendada">Agendada</option>
@@ -212,15 +212,15 @@
             <h3>Histórico</h3>
             <p class="muted">Busca rápida.</p>
           </div>
-          <label>Buscar<input type="search" id="consultation-search" placeholder="Médico, motivo, diagnóstico" /></label>
+          <label>Buscar<input type="search" id="consultation-search" placeholder="Profissional, motivo, observações" /></label>
           <div class="table-shell">
             <table>
               <thead>
                 <tr>
                   <th>Data</th>
-                  <th>Médico</th>
+                  <th>Profissional</th>
                   <th>Motivo</th>
-                  <th>Diagnóstico</th>
+                  <th>Observações</th>
                   <th>Status</th>
                   <th>Ação</th>
                 </tr>
@@ -397,12 +397,54 @@
     <section class="screen-block" data-screen="privacy" hidden>
       <div class="local-card">
         <div class="local-section-header">
-          <h2>Privacidade</h2>
-          <p class="muted">Controle e proteção das suas informações.</p>
+          <h2>Política de privacidade</h2>
+          <p class="muted">Armazenamento local e controle do usuário.</p>
         </div>
-        <div class="local-stack">
-          <p>Suas informações são usadas para organizar seus registros de saúde no aplicativo.</p>
-          <p>Revise periodicamente seus dados e mantenha o bloqueio de tela ativo.</p>
+        <div class="local-stack privacy-policy">
+          <p>Data de vigência: 28 de março de 2026. Última atualização: 18 de maio de 2026.</p>
+          <p>O Organizador de Saúde permite ao usuário organizar informações pessoais de saúde, como dados cadastrais, consultas, medicamentos, exames, resultados, observações e anexos adicionados manualmente.</p>
+
+          <h3>Finalidade do aplicativo</h3>
+          <p>O aplicativo é uma ferramenta de organização pessoal. Ele não é um dispositivo médico, não realiza diagnóstico, não trata, cura ou previne qualquer condição de saúde, não substitui consulta, acompanhamento ou orientação de um profissional de saúde e não deve ser usado para emergências médicas.</p>
+
+          <h3>Dados que podem ser tratados</h3>
+          <p>O aplicativo pode armazenar localmente dados informados pelo próprio usuário, incluindo nome, e-mail, telefone, data de nascimento, informações pessoais de saúde, consultas, medicamentos, exames, resultados, valores de referência, observações e anexos adicionados manualmente.</p>
+          <p>O aplicativo não solicita acesso a câmera, microfone, localização, contatos, sensores corporais, Health Connect ou outros dados de saúde de fontes externas.</p>
+
+          <h3>Onde os dados ficam</h3>
+          <p>Na versão atual, o aplicativo não coleta, transmite ou sincroniza dados com servidor online, nuvem pública, banco de dados remoto ou painel externo. Os dados de saúde e registros cadastrados permanecem armazenados localmente no dispositivo do usuário. Quando suportado pela plataforma, anexos são gravados na área privada do aplicativo.</p>
+
+          <h3>Como os dados são utilizados</h3>
+          <p>Os dados são utilizados somente para exibir e organizar registros dentro do próprio aplicativo, permitir cadastro, edição, consulta e exclusão de registros pelo usuário, mostrar resumos, alertas locais e comparações com valores de referência informados pelo usuário.</p>
+
+          <h3>Coleta, acesso e compartilhamento</h3>
+          <ul>
+            <li>Não há acesso público aos dados cadastrados.</li>
+            <li>O desenvolvedor não acessa, visualiza, coleta ou acompanha as informações salvas no aplicativo.</li>
+            <li>Os dados não são vendidos.</li>
+            <li>Não há anúncios, analytics, rastreamento de marketing ou compartilhamento automático com terceiros.</li>
+          </ul>
+
+          <h3>Compartilhamento</h3>
+          <p>O compartilhamento somente poderá ocorrer se o próprio usuário decidir mostrar, exportar, enviar ou compartilhar manualmente algum conteúdo, ou quando houver exigência legal, ordem judicial ou obrigação regulatória aplicável.</p>
+
+          <h3>Segurança</h3>
+          <p>São adotadas medidas técnicas razoáveis para reduzir acesso não autorizado, perda, alteração ou divulgação indevida de dados, incluindo armazenamento local no dispositivo e uso da área privada do aplicativo quando disponível. Como os dados ficam no dispositivo, a segurança também depende das configurações do aparelho.</p>
+
+          <h3>Retenção e exclusão dos dados</h3>
+          <p>Os dados permanecem armazenados enquanto forem mantidos pelo usuário no aplicativo. O usuário pode excluir registros dentro do aplicativo quando essa opção estiver disponível. Também pode excluir os dados locais ao desinstalar o aplicativo ou limpar os dados do app nas configurações do dispositivo.</p>
+
+          <h3>Direitos do titular</h3>
+          <p>O usuário pode acessar, corrigir, atualizar ou excluir os registros mantidos localmente diretamente no próprio aplicativo ou no dispositivo.</p>
+
+          <h3>Crianças e adolescentes</h3>
+          <p>O aplicativo não é direcionado especificamente a crianças menores de 13 anos sem supervisão do responsável legal.</p>
+
+          <h3>Alterações desta política</h3>
+          <p>Esta política poderá ser atualizada para refletir melhorias do produto, mudanças legais, regulatórias ou operacionais. A versão vigente será a publicada nesta página.</p>
+
+          <h3>Contato</h3>
+          <p>Para dúvidas sobre privacidade, tratamento de dados ou solicitações relacionadas ao aplicativo, entre em contato pelos canais oficiais de suporte: contato@accertconsult.com.br ou crisppi@gmail.com.</p>
         </div>
       </div>
     </section>

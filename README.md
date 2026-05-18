@@ -1,6 +1,6 @@
 # Organizador de Saude
 
-Aplicativo mobile local empacotado pelo Capacitor.
+Aplicativo mobile local empacotado pelo Capacitor para organizar registros pessoais de saude.
 
 ## Arquitetura
 
@@ -9,6 +9,8 @@ Aplicativo mobile local empacotado pelo Capacitor.
 - Nao ha backend PHP, DAO, MySQL, SQL migrations ou pasta `web/`.
 - Dados pessoais, perfil, consultas, medicamentos, exames, resultados e anexos ficam no dispositivo.
 - Anexos usam a area privada do app quando `@capacitor/filesystem` estiver disponivel.
+- O app nao declara permissao de internet no Android.
+- Backup automatico do Android fica desativado para manter a proposta de dados locais.
 
 ## Arquivos principais
 
@@ -22,8 +24,16 @@ Aplicativo mobile local empacotado pelo Capacitor.
 O build Android deve empacotar apenas o conteudo de `app/` em `android/app/src/main/assets/public`.
 
 ```bash
-npm run sync:android
+npm run sync
 ./android/gradlew bundleRelease
 ```
 
 O bundle Android fica em `android/app/build/outputs/bundle/release/app-release.aab`.
+
+## Privacidade
+
+A politica de privacidade tambem esta disponivel em `PRIVACY_POLICY.md` para publicacao como URL externa na Play Console.
+
+Mesmo sem coleta online, o app organiza informacoes de saude inseridas pelo usuario. Na Play Console, preencha a declaracao de apps de saude e a secao de seguranca dos dados de forma consistente com armazenamento local, sem coleta e sem compartilhamento.
+
+Para a Play Console, use uma URL publica, sem login, sem bloqueio geografico e nao editavel. Evite usar link de edicao do Google Docs; prefira publicar a politica como pagina web ou usar GitHub Pages.

@@ -14,7 +14,7 @@ Objetivo: evoluir o app sem anuncios, mantendo a proposta de privacidade e dados
 
 ## Prioridade inicial
 
-1. PDF com resumo do prontuario, exames, evolucao e alertas.
+1. PDF com resumo pessoal, exames, evolucao e alertas.
 2. PIN/biometria opcional.
 3. Backup criptografado.
 4. Multiplos perfis.
@@ -22,7 +22,7 @@ Objetivo: evoluir o app sem anuncios, mantendo a proposta de privacidade e dados
 
 ## Compra e desbloqueio
 
-- Produto na Play Console: `meu_prontuario_pro`.
+- Produto na Play Console: `organizador_saude_pro`.
 - Tipo: produto unico / nao consumivel.
 - Preco sugerido: R$ 9,99.
 - Compra feita pela Google Play Billing.

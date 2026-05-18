@@ -1,5 +1,5 @@
 {
-  "name": "prontuario",
+  "name": "organizador-saude",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -19,11 +19,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/crisppi/meuProntuario.git"
+    "url": "git+https://github.com/crisppi/organizador-saude.git"
   },
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/crisppi/meuProntuario/issues"
+    "url": "https://github.com/crisppi/organizador-saude/issues"
   },
-  "homepage": "https://github.com/crisppi/meuProntuario#readme"
+  "homepage": "https://github.com/crisppi/organizador-saude#readme"
 }

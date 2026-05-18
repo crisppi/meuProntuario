@@ -1,4 +1,4 @@
-package com.meuprontuario;
+package com.organizadordesaude;
 
 import com.getcapacitor.BridgeActivity;
 

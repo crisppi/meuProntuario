@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   $('#preconsultation-save')?.addEventListener('click', async () => {
     await app.store.savePreConsultation(getFormData(preConsultationForm));
-    showMessage($('#preconsultation-feedback'), 'Pré-consulta salva.');
+    showMessage($('#preconsultation-feedback'), 'Preparação salva.');
   });
 
   const consultationForm = $('#consultation-form');
