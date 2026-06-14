@@ -2,16 +2,15 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Organizador de Saúde</title>
-  <link rel="stylesheet" href="assets/styles/app.css?v=20260608a" />
+  <link rel="stylesheet" href="assets/styles/app.css?v=20260614m" />
 </head>
 <body class="app-local-shell">
   <header class="app-local-header">
     <div class="app-local-brand">
       <img class="app-local-logo" src="assets/images/logo.png" alt="" aria-hidden="true" />
       <div>
-        <p class="app-kicker">Organizador de saúde</p>
         <h1>Organizador de Saúde</h1>
         <p>Acompanhe registros pessoais de consultas, exames, medicamentos e informações de rotina.</p>
       </div>
@@ -25,24 +24,43 @@
   </header>
 
   <nav class="app-local-nav" id="app-nav" aria-label="Módulos do aplicativo" hidden>
-    <button type="button" class="button ghost" data-screen-target="dashboard">Dashboard</button>
-    <button type="button" class="button ghost" data-screen-target="alerts">Alertas</button>
-    <button type="button" class="button ghost" data-screen-target="doctor-mode">Resumo</button>
-    <button type="button" class="button ghost" data-screen-target="pre-consultation">Preparação</button>
-    <button type="button" class="button ghost" data-screen-target="personal">Dados pessoais</button>
-    <button type="button" class="button ghost" data-screen-target="profile">Perfil</button>
+    <button type="button" class="button ghost" data-screen-target="dashboard">Painel</button>
+    <button type="button" class="button ghost" data-screen-target="exams">Exames</button>
     <button type="button" class="button ghost" data-screen-target="consultations">Consultas</button>
     <button type="button" class="button ghost" data-screen-target="medications">Medicamentos</button>
-    <button type="button" class="button ghost" data-screen-target="exams">Exames</button>
-    <button type="button" class="button ghost" data-screen-target="privacy">Privacidade</button>
+    <button type="button" class="button ghost" data-screen-target="alerts">Alertas</button>
+    <button type="button" class="button ghost" data-screen-target="doctor-mode">Resumo</button>
+    <button type="button" class="button ghost" data-screen-target="pre-consultation">Pré consulta</button>
+    <hr class="nav-separator" aria-hidden="true" />
+    <button type="button" class="button ghost nav-profile-button" data-screen-target="personal">Dados pessoais</button>
     <button type="button" class="button secondary" id="logout-btn">Limpar sessão</button>
   </nav>
 
   <main class="app-local-main">
     <section class="screen-block" data-screen="dashboard">
       <div class="local-section-header">
-        <h2>Resumo geral</h2>
+        <h2>Painel</h2>
         <p class="muted">Visualize rapidamente seus registros pessoais de saúde.</p>
+      </div>
+      <div class="dashboard-hero">
+        <span>Organizador pessoal</span>
+        <h3 id="dashboard-title">Comece pelo que já está à mão.</h3>
+        <p id="dashboard-copy">Registre consultas, exames e medicamentos para montar seu histórico aos poucos.</p>
+        <div class="dashboard-actions">
+          <button type="button" class="button primary" data-screen-target="exams">Adicionar exame</button>
+          <button type="button" class="button light" data-screen-target="consultations">Registrar consulta</button>
+          <button type="button" class="button light" data-screen-target="pre-consultation">Pré consulta</button>
+        </div>
+      </div>
+      <div class="dashboard-info-grid">
+        <article class="local-card dashboard-info-card">
+          <h3>Próxima consulta</h3>
+          <p id="dashboard-next-consultation">Nenhuma consulta agendada.</p>
+        </article>
+        <article class="local-card dashboard-info-card">
+          <h3>Atenção</h3>
+          <p id="dashboard-attention">Nenhum alerta no momento.</p>
+        </article>
       </div>
       <div class="app-local-grid">
         <article class="local-stat-card"><span>Exames cadastrados</span><strong id="stat-exams">0</strong></article>
@@ -100,7 +118,7 @@
 
     <section class="screen-block" data-screen="pre-consultation" hidden>
       <div class="local-section-header">
-        <h2>Preparação</h2>
+        <h2>Pré consulta</h2>
         <p class="muted">Organize os pontos principais antes de conversar com um profissional de saúde.</p>
       </div>
       <div class="local-stack">
@@ -154,6 +172,8 @@
         </form>
         <div class="actions">
           <button type="button" class="button primary" id="personal-save">Salvar dados pessoais</button>
+          <button type="button" class="button secondary" data-screen-target="profile">Perfil de saúde</button>
+          <button type="button" class="button secondary" data-screen-target="privacy">Ver privacidade</button>
         </div>
         <div id="personal-feedback" class="form-feedback" hidden></div>
       </div>
@@ -399,6 +419,9 @@
         <div class="local-section-header">
           <h2>Política de privacidade</h2>
           <p class="muted">Armazenamento local e controle do usuário.</p>
+        </div>
+        <div class="actions privacy-actions">
+          <button type="button" class="button secondary" data-screen-target="personal">Fechar</button>
         </div>
         <div class="local-stack privacy-policy">
           <p>Data de vigência: 28 de março de 2026. Última atualização: 18 de maio de 2026.</p>

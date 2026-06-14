@@ -219,14 +219,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const renderDashboard = () => {
     const data = stats();
+    const totalItems = data.exams + data.examResults + data.consultations + data.medications + data.attachments;
+    const dashboardTitle = $('#dashboard-title');
+    const dashboardCopy = $('#dashboard-copy');
+    if (dashboardTitle && dashboardCopy) {
+      if (totalItems > 0) {
+        dashboardTitle.textContent = 'Seu histórico está tomando forma.';
+        dashboardCopy.textContent = 'Continue registrando informações importantes para consultar tudo com calma quando precisar.';
+      } else {
+        dashboardTitle.textContent = 'Comece pelo que já está à mão.';
+        dashboardCopy.textContent = 'Registre consultas, exames e medicamentos para montar seu histórico aos poucos.';
+      }
+    }
     $('#stat-exams').textContent = String(data.exams);
     $('#stat-results').textContent = String(data.examResults);
     $('#stat-consultations').textContent = String(data.consultations);
     $('#stat-medications').textContent = String(data.medications);
     $('#stat-attachments').textContent = String(data.attachments);
+    const nextConsultation = $('#dashboard-next-consultation');
+    if (nextConsultation) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const upcoming = app.store.listConsultations()
+        .filter((item) => item.data_consulta && item.status !== 'cancelada')
+        .map((item) => ({ ...item, date: new Date(`${item.data_consulta}T${item.hora_inicio || '00:00'}`) }))
+        .filter((item) => !Number.isNaN(item.date.getTime()) && item.date >= today)
+        .sort((a, b) => a.date - b.date)[0];
+      nextConsultation.textContent = upcoming
+        ? `${formatDate(upcoming.data_consulta)}${upcoming.hora_inicio ? ` às ${upcoming.hora_inicio}` : ''} • ${upcoming.medico || upcoming.motivo || 'Consulta'}`
+        : 'Nenhuma consulta agendada.';
+    }
     const alertStat = $('#stat-alerts');
+    const alertCount = getLatestExamAlerts().length;
     if (alertStat) {
-      alertStat.textContent = String(getLatestExamAlerts().length);
+      alertStat.textContent = String(alertCount);
+    }
+    const dashboardAttention = $('#dashboard-attention');
+    if (dashboardAttention) {
+      dashboardAttention.textContent = alertCount
+        ? `${alertCount} resultado fora da referência para revisar.`
+        : 'Nenhum alerta no momento.';
     }
   };
 
@@ -254,7 +286,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   $('#preconsultation-save')?.addEventListener('click', async () => {
     await app.store.savePreConsultation(getFormData(preConsultationForm));
-    showMessage($('#preconsultation-feedback'), 'Preparação salva.');
+    showMessage($('#preconsultation-feedback'), 'Pré consulta salva.');
   });
 
   const consultationForm = $('#consultation-form');
