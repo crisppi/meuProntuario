@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Organizador de Saúde</title>
+  <link rel="stylesheet" href="assets/styles/app.css?v=20260614m" />
+</head>
+<body class="app-local-shell">
+  <header class="app-local-header">
+    <div class="app-local-brand">
+      <img class="app-local-logo" src="assets/images/logo.png" alt="" aria-hidden="true" />
+      <div>
+        <h1>Organizador de Saúde</h1>
+        <p>Acompanhe registros pessoais de consultas, exames, medicamentos e informações de rotina.</p>
+      </div>
+    </div>
+    <button type="button" class="menu-toggle" id="app-menu-toggle" aria-expanded="false" aria-controls="app-nav">
+      <span></span>
+      <span></span>
+      <span></span>
+      <strong>Módulos</strong>
+    </button>
+  </header>
+
+  <nav class="app-local-nav" id="app-nav" aria-label="Módulos do aplicativo" hidden>
+    <button type="button" class="button ghost" data-screen-target="dashboard">Painel</button>
+    <button type="button" class="button ghost" data-screen-target="exams">Exames</button>
+    <button type="button" class="button ghost" data-screen-target="consultations">Consultas</button>
+    <button type="button" class="button ghost" data-screen-target="medications">Medicamentos</button>
+    <button type="button" class="button ghost" data-screen-target="alerts">Alertas</button>
+    <button type="button" class="button ghost" data-screen-target="doctor-mode">Resumo</button>
+    <button type="button" class="button ghost" data-screen-target="pre-consultation">Pré consulta</button>
+    <hr class="nav-separator" aria-hidden="true" />
+    <button type="button" class="button ghost nav-profile-button" data-screen-target="personal">Dados pessoais</button>
+    <button type="button" class="button secondary" id="logout-btn">Limpar sessão</button>
+  </nav>
+
+  <main class="app-local-main">
+    <section class="screen-block" data-screen="dashboard">
+      <div class="local-section-header">
+        <h2>Painel</h2>
+        <p class="muted">Visualize rapidamente seus registros pessoais de saúde.</p>
+      </div>
+      <div class="dashboard-hero">
+        <span>Organizador pessoal</span>
+        <h3 id="dashboard-title">Comece pelo que já está à mão.</h3>
+        <p id="dashboard-copy">Registre consultas, exames e medicamentos para montar seu histórico aos poucos.</p>
+        <div class="dashboard-actions">
+          <button type="button" class="button primary" data-screen-target="exams">Adicionar exame</button>
+          <button type="button" class="button light" data-screen-target="consultations">Registrar consulta</button>
+          <button type="button" class="button light" data-screen-target="pre-consultation">Pré consulta</button>
+        </div>
+      </div>
+      <div class="dashboard-info-grid">
+        <article class="local-card dashboard-info-card">
+          <h3>Próxima consulta</h3>
+          <p id="dashboard-next-consultation">Nenhuma consulta agendada.</p>
+        </article>
+        <article class="local-card dashboard-info-card">
+          <h3>Atenção</h3>
+          <p id="dashboard-attention">Nenhum alerta no momento.</p>
+        </article>
+      </div>
+      <div class="app-local-grid">
+        <article class="local-stat-card"><span>Exames cadastrados</span><strong id="stat-exams">0</strong></article>
+        <article class="local-stat-card"><span>Resultados</span><strong id="stat-results">0</strong></article>
+        <article class="local-stat-card"><span>Consultas</span><strong id="stat-consultations">0</strong></article>
+        <article class="local-stat-card"><span>Medicamentos</span><strong id="stat-medications">0</strong></article>
+        <article class="local-stat-card"><span>Anexos</span><strong id="stat-attachments">0</strong></article>
+        <article class="local-stat-card alert-stat"><span>Fora da referência</span><strong id="stat-alerts">0</strong></article>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="alerts" hidden>
+      <div class="local-section-header">
+        <h2>Alertas</h2>
+        <p class="muted">Resultados recentes fora da faixa de referência.</p>
+      </div>
+      <div class="local-card">
+        <p class="alert-intro">Tenha atenção a estes resultados e considere repetir o exame em breve. Se houver sintomas, piora clínica ou dúvida, procure orientação profissional.</p>
+        <div id="exam-alert-list" class="alert-list"></div>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="doctor-mode" hidden>
+      <div class="local-section-header">
+        <h2>Resumo pessoal</h2>
+        <p class="muted">Resumo organizado para consulta própria ou para mostrar durante um atendimento.</p>
+      </div>
+      <div class="local-stack doctor-summary">
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Exames que merecem atenção</h3>
+          </div>
+          <div id="doctor-alerts" class="compact-list"></div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Evolução dos exames</h3>
+          </div>
+          <div id="doctor-evolution" class="evolution-grid"></div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Medicamentos em uso</h3>
+          </div>
+          <div id="doctor-medications" class="compact-list"></div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Atendimentos recentes</h3>
+          </div>
+          <div id="doctor-consultations" class="compact-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="pre-consultation" hidden>
+      <div class="local-section-header">
+        <h2>Pré consulta</h2>
+        <p class="muted">Organize os pontos principais antes de conversar com um profissional de saúde.</p>
+      </div>
+      <div class="local-stack">
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Checklist</h3>
+          </div>
+          <div class="precheck-list">
+            <label><input type="checkbox" checked disabled /> Revisar exames alterados</label>
+            <label><input type="checkbox" checked disabled /> Conferir medicamentos em uso</label>
+            <label><input type="checkbox" checked disabled /> Anotar sintomas ou mudanças recentes</label>
+            <label><input type="checkbox" checked disabled /> Separar perguntas para o profissional</label>
+          </div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Exames alterados</h3>
+          </div>
+          <div id="preconsult-alerts" class="compact-list"></div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Medicamentos em uso</h3>
+          </div>
+          <div id="preconsult-medications" class="compact-list"></div>
+        </div>
+        <div class="local-card">
+          <form id="preconsultation-form" class="grid-form">
+            <label class="full-width">Observações para a consulta<textarea name="observacoes" placeholder="Sintomas, mudanças recentes, dúvidas gerais"></textarea></label>
+            <label class="full-width">Perguntas para o profissional<textarea name="perguntas" placeholder="Ex: Preciso revisar algum exame? Anotar alguma orientação recebida?"></textarea></label>
+          </form>
+          <div class="actions">
+            <button type="button" class="button primary" id="preconsultation-save">Salvar pré-consulta</button>
+          </div>
+          <div id="preconsultation-feedback" class="form-feedback" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="personal" hidden>
+      <div class="local-section-header">
+        <h2>Dados pessoais</h2>
+        <p class="muted">Mantenha suas informações de identificação sempre atualizadas.</p>
+      </div>
+      <div class="local-card">
+        <form id="personal-form" class="grid-form">
+          <label>Nome completo<input type="text" name="nome" required /></label>
+          <label>E-mail<input type="email" name="email" /></label>
+          <label>Telefone<input type="tel" name="telefone" /></label>
+          <label>Data de nascimento<input type="date" name="data_nascimento" /></label>
+        </form>
+        <div class="actions">
+          <button type="button" class="button primary" id="personal-save">Salvar dados pessoais</button>
+          <button type="button" class="button secondary" data-screen-target="profile">Perfil de saúde</button>
+          <button type="button" class="button secondary" data-screen-target="privacy">Ver privacidade</button>
+        </div>
+        <div id="personal-feedback" class="form-feedback" hidden></div>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="profile" hidden>
+      <div class="local-section-header">
+        <h2>Perfil de saúde</h2>
+        <p class="muted">Informações complementares para consulta rápida.</p>
+      </div>
+      <div class="local-card">
+        <form id="profile-form" class="grid-form">
+          <label>Peso (kg)<input type="number" step="0.1" name="peso" /></label>
+          <label>Altura (m)<input type="number" step="0.01" name="altura" /></label>
+          <label>Tipo sanguíneo<input type="text" name="tipo_sanguineo" /></label>
+          <label class="full-width">Alergias<textarea name="alergias"></textarea></label>
+          <label class="full-width">Condições crônicas<textarea name="condicoes_cronicas"></textarea></label>
+          <label class="full-width">Observações<textarea name="observacoes"></textarea></label>
+        </form>
+        <div class="actions">
+          <button type="button" class="button primary" id="profile-save">Salvar perfil</button>
+        </div>
+        <div id="profile-feedback" class="form-feedback" hidden></div>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="consultations" hidden>
+      <div class="local-section-header">
+        <h2>Consultas</h2>
+        <p class="muted">Registre e acompanhe seu histórico pessoal de atendimentos.</p>
+      </div>
+      <div class="local-split">
+        <div class="local-card">
+          <form id="consultation-form" class="grid-form">
+            <label>Data<input type="date" name="data_consulta" required /></label>
+            <label>Hora início<input type="time" name="hora_inicio" /></label>
+            <label>Hora fim<input type="time" name="hora_fim" /></label>
+            <label>Profissional<input type="text" name="medico" /></label>
+            <label class="full-width">Motivo<textarea name="motivo"></textarea></label>
+            <label class="full-width">Observações do atendimento<textarea name="diagnostico"></textarea></label>
+            <label>Status
+              <select name="status">
+                <option value="agendada">Agendada</option>
+                <option value="realizada">Realizada</option>
+                <option value="cancelada">Cancelada</option>
+              </select>
+            </label>
+          </form>
+          <div class="actions">
+            <button type="button" class="button primary" id="consultation-save">Salvar consulta</button>
+          </div>
+          <div id="consultation-feedback" class="form-feedback" hidden></div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Histórico</h3>
+            <p class="muted">Busca rápida.</p>
+          </div>
+          <label>Buscar<input type="search" id="consultation-search" placeholder="Profissional, motivo, observações" /></label>
+          <div class="table-shell">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Profissional</th>
+                  <th>Motivo</th>
+                  <th>Observações</th>
+                  <th>Status</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody id="consultation-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="medications" hidden>
+      <div class="local-section-header">
+        <h2>Medicamentos</h2>
+        <p class="muted">Controle seus medicamentos em uso.</p>
+      </div>
+      <div class="local-split">
+        <div class="local-card">
+          <form id="medication-form" class="grid-form">
+            <label>Nome<input type="text" name="nome" required /></label>
+            <label>Laboratório<input type="text" name="laboratorio" /></label>
+            <label>Dosagem<input type="text" name="dosagem" /></label>
+            <label>Intervalo<input type="text" name="intervalo" placeholder="Ex: 8/8h" /></label>
+            <label>Status
+              <select name="status">
+                <option value="Em Uso">Em Uso</option>
+                <option value="Suspenso">Suspenso</option>
+              </select>
+            </label>
+          </form>
+          <div class="actions">
+            <button type="button" class="button primary" id="medication-save">Salvar medicamento</button>
+          </div>
+          <div id="medication-feedback" class="form-feedback" hidden></div>
+        </div>
+        <div class="local-card">
+          <div class="local-section-header">
+            <h3>Lista</h3>
+            <p class="muted">Busca rápida.</p>
+          </div>
+          <label>Buscar<input type="search" id="medication-search" placeholder="Nome, laboratório, dosagem" /></label>
+          <div class="table-shell">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Periodicidade</th>
+                  <th>Dosagem</th>
+                  <th>Intervalo</th>
+                  <th>Status</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody id="medication-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="exams" hidden>
+      <div class="local-section-header">
+        <h2>Exames</h2>
+        <p class="muted">Cadastre exames, lance resultados e acompanhe a evolução.</p>
+      </div>
+      <div class="section-menu">
+        <button type="button" class="button secondary section-menu-toggle" id="exam-panel-toggle" aria-expanded="false" aria-controls="exam-panel-menu">
+          <span>Seção</span>
+          <strong id="exam-panel-current">Cadastrar exame</strong>
+        </button>
+        <nav class="section-subnav" id="exam-panel-menu" aria-label="Seções de exames" hidden>
+          <button type="button" class="button ghost" data-exam-panel-target="definition">Cadastrar exame</button>
+          <button type="button" class="button ghost" data-exam-panel-target="result">Lançar resultado</button>
+          <button type="button" class="button ghost" data-exam-panel-target="evolution">Evolução</button>
+          <button type="button" class="button ghost" data-exam-panel-target="definitions-list">Exames cadastrados</button>
+          <button type="button" class="button ghost" data-exam-panel-target="results-list">Resultados</button>
+          <button type="button" class="button ghost" data-exam-panel-target="attachments">Anexos</button>
+        </nav>
+      </div>
+      <div class="local-stack">
+        <div class="local-card exam-panel" data-exam-panel="definition">
+          <div class="local-section-header">
+            <h3>Cadastro de exame</h3>
+            <p class="muted">Informe o nome e a faixa de referência para comparar os resultados futuros.</p>
+          </div>
+          <form id="exam-definition-form" class="grid-form">
+            <input type="hidden" name="tipo_exame" value="laboratorial" />
+            <label>Nome do exame<input type="text" name="nome_exame" required /></label>
+            <label>Unidade<input type="text" name="unidade" /></label>
+            <label>Referência mínima<input type="number" step="0.01" name="referencia_min" /></label>
+            <label>Referência máxima<input type="number" step="0.01" name="referencia_max" /></label>
+            <label>Periodicidade<input type="text" name="frequencia" placeholder="Ex: anual, semestral" /></label>
+            <label class="full-width">Observações<textarea name="observacoes"></textarea></label>
+          </form>
+          <div class="actions">
+            <button type="button" class="button primary" id="exam-definition-save">Salvar exame</button>
+          </div>
+          <div id="exam-feedback" class="form-feedback" hidden></div>
+        </div>
+
+        <div class="local-card exam-panel" data-exam-panel="result" hidden>
+          <div class="local-section-header">
+            <h3>Resultado do exame</h3>
+            <p class="muted">Busque o exame cadastrado e lance cada realização com data, resultado e local.</p>
+          </div>
+          <form id="exam-result-form" class="grid-form">
+            <label class="full-width">Buscar exame<input type="search" id="result-exam-search" placeholder="Digite para filtrar exames cadastrados" /></label>
+            <label>Exame
+              <select id="result-exam-id" name="exame_id" required>
+                <option value="">Selecione um exame</option>
+              </select>
+            </label>
+            <label>Data da coleta<input type="date" name="data_coleta" required /></label>
+            <label id="result-value-field">Resultado<input type="number" step="0.01" name="valor" required /></label>
+            <label>Local/Laboratório<input type="text" name="laboratorio" /></label>
+            <label class="full-width">Observações<textarea name="observacoes"></textarea></label>
+            <label class="full-width">Anexos (PDF, PNG, JPG)<input type="file" id="result-attachments" accept=".pdf,image/png,image/jpeg" multiple /></label>
+          </form>
+          <div class="actions">
+            <button type="button" class="button primary" id="exam-result-save">Salvar resultado</button>
+          </div>
+          <div id="exam-result-feedback" class="form-feedback" hidden></div>
+        </div>
+
+        <div class="local-card exam-panel" data-exam-panel="evolution" hidden>
+          <div class="local-section-header">
+            <h3>Evolução dos exames</h3>
+            <p class="muted">Acompanhe a tendência dos resultados em relação à faixa de referência.</p>
+          </div>
+          <label>Buscar exame<input type="search" id="evolution-search" placeholder="Nome do exame" /></label>
+          <div id="exam-evolution-list" class="evolution-grid"></div>
+        </div>
+
+        <div class="local-card exam-panel" data-exam-panel="definitions-list" hidden>
+          <div class="local-section-header">
+            <h3>Exames cadastrados</h3>
+            <p class="muted">Busca rápida.</p>
+          </div>
+          <label>Buscar<input type="search" id="exam-search" placeholder="Nome, tipo, laboratório" /></label>
+          <div class="table-shell">
+            <table>
+              <thead>
+                <tr>
+                  <th>Exame</th>
+                  <th>Tipo</th>
+                  <th>Unidade</th>
+                  <th>Referência</th>
+                  <th>Laboratório</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody id="exam-definition-list"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="local-card exam-panel" data-exam-panel="results-list" hidden>
+          <div class="local-section-header">
+            <h3>Resultados e busca</h3>
+          </div>
+          <label>Buscar<input type="search" id="result-search" placeholder="Exame, laboratório, observações, anexo" /></label>
+          <div id="exam-results-list" class="local-stack"></div>
+        </div>
+
+        <div class="local-card exam-panel" data-exam-panel="attachments" hidden>
+          <div class="local-section-header">
+            <h3>Anexos</h3>
+          </div>
+          <div id="attachments-list" class="attachment-grid-local"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen-block" data-screen="privacy" hidden>
+      <div class="local-card">
+        <div class="local-section-header">
+          <h2>Política de privacidade</h2>
+          <p class="muted">Armazenamento local e controle do usuário.</p>
+        </div>
+        <div class="actions privacy-actions">
+          <button type="button" class="button secondary" data-screen-target="personal">Fechar</button>
+        </div>
+        <div class="local-stack privacy-policy">
+          <p>Data de vigência: 28 de março de 2026. Última atualização: 18 de maio de 2026.</p>
+          <p>O Organizador de Saúde permite ao usuário organizar informações pessoais de saúde, como dados cadastrais, consultas, medicamentos, exames, resultados, observações e anexos adicionados manualmente.</p>
+
+          <h3>Finalidade do aplicativo</h3>
+          <p>O aplicativo é uma ferramenta de organização pessoal. Ele não é um dispositivo médico, não realiza diagnóstico, não trata, cura ou previne qualquer condição de saúde, não substitui consulta, acompanhamento ou orientação de um profissional de saúde e não deve ser usado para emergências médicas.</p>
+
+          <h3>Dados que podem ser tratados</h3>
+          <p>O aplicativo pode armazenar localmente dados informados pelo próprio usuário, incluindo nome, e-mail, telefone, data de nascimento, informações pessoais de saúde, consultas, medicamentos, exames, resultados, valores de referência, observações e anexos adicionados manualmente.</p>
+          <p>O aplicativo não solicita acesso a câmera, microfone, localização, contatos, sensores corporais, Health Connect ou outros dados de saúde de fontes externas.</p>
+
+          <h3>Onde os dados ficam</h3>
+          <p>Na versão atual, o aplicativo não coleta, transmite ou sincroniza dados com servidor online, nuvem pública, banco de dados remoto ou painel externo. Os dados de saúde e registros cadastrados permanecem armazenados localmente no dispositivo do usuário. Quando suportado pela plataforma, anexos são gravados na área privada do aplicativo.</p>
+
+          <h3>Como os dados são utilizados</h3>
+          <p>Os dados são utilizados somente para exibir e organizar registros dentro do próprio aplicativo, permitir cadastro, edição, consulta e exclusão de registros pelo usuário, mostrar resumos, alertas locais e comparações com valores de referência informados pelo usuário.</p>
+
+          <h3>Coleta, acesso e compartilhamento</h3>
+          <ul>
+            <li>Não há acesso público aos dados cadastrados.</li>
+            <li>O desenvolvedor não acessa, visualiza, coleta ou acompanha as informações salvas no aplicativo.</li>
+            <li>Os dados não são vendidos.</li>
+            <li>Não há anúncios, analytics, rastreamento de marketing ou compartilhamento automático com terceiros.</li>
+          </ul>
+
+          <h3>Compartilhamento</h3>
+          <p>O compartilhamento somente poderá ocorrer se o próprio usuário decidir mostrar, exportar, enviar ou compartilhar manualmente algum conteúdo, ou quando houver exigência legal, ordem judicial ou obrigação regulatória aplicável.</p>
+
+          <h3>Segurança</h3>
+          <p>São adotadas medidas técnicas razoáveis para reduzir acesso não autorizado, perda, alteração ou divulgação indevida de dados, incluindo armazenamento local no dispositivo e uso da área privada do aplicativo quando disponível. Como os dados ficam no dispositivo, a segurança também depende das configurações do aparelho.</p>
+
+          <h3>Retenção e exclusão dos dados</h3>
+          <p>Os dados permanecem armazenados enquanto forem mantidos pelo usuário no aplicativo. O usuário pode excluir registros dentro do aplicativo quando essa opção estiver disponível. Também pode excluir os dados locais ao desinstalar o aplicativo ou limpar os dados do app nas configurações do dispositivo.</p>
+
+          <h3>Direitos do titular</h3>
+          <p>O usuário pode acessar, corrigir, atualizar ou excluir os registros mantidos localmente diretamente no próprio aplicativo ou no dispositivo.</p>
+
+          <h3>Crianças e adolescentes</h3>
+          <p>O aplicativo não é direcionado especificamente a crianças menores de 13 anos sem supervisão do responsável legal.</p>
+
+          <h3>Alterações desta política</h3>
+          <p>Esta política poderá ser atualizada para refletir melhorias do produto, mudanças legais, regulatórias ou operacionais. A versão vigente será a publicada nesta página.</p>
+
+          <h3>Contato</h3>
+          <p>Para dúvidas sobre privacidade, tratamento de dados ou solicitações relacionadas ao aplicativo, entre em contato pelos canais oficiais de suporte: contato@accertconsult.com.br ou crisppi@gmail.com.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/local-health-app.js"></script>
+  <script src="assets/js/app-page.js"></script>
+</body>
+</html>

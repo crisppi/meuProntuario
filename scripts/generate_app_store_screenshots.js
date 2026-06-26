@@ -3,10 +3,14 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const root = path.resolve(__dirname, '..');
+const appRoot = path.join(root, 'app');
 const outRoot = path.join(root, 'build', 'app-store-screenshots');
 const sourceDir = path.join(outRoot, 'source');
-const appIconPath = path.join(root, 'app', 'assets', 'store', 'play-store-icon.png');
+const indexPath = path.join(appRoot, 'index.html');
 const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+
+const legacyStorageKey = 'organizador_saude_local_v1';
+const sessionKey = 'organizador_saude_session_v1';
 
 const specs = [
   {
@@ -14,395 +18,414 @@ const specs = [
     cssWidth: 414,
     cssHeight: 896,
     scale: 3,
-    screenshots: ['resumo', 'exames', 'preparacao'],
   },
   {
-    folder: 'iphone-6.9',
-    cssWidth: 440,
-    cssHeight: 956,
+    folder: 'iphone-6.7',
+    cssWidth: 430,
+    cssHeight: 932,
     scale: 3,
-    screenshots: ['resumo', 'exames', 'preparacao'],
   },
   {
-    folder: 'ipad',
+    folder: 'ipad-13',
     cssWidth: 1024,
     cssHeight: 1366,
     scale: 2,
-    screenshots: ['ipad-resumo'],
   },
 ];
 
-const appIconUri = `file://${appIconPath}`;
+const captures = [
+  {
+    id: 'painel',
+    screen: 'dashboard',
+    title: 'Painel',
+  },
+  {
+    id: 'exames-evolucao',
+    screen: 'exams',
+    panel: 'evolution',
+    title: 'Exames',
+  },
+  {
+    id: 'pre-consulta',
+    screen: 'pre-consultation',
+    title: 'Pre consulta',
+  },
+];
 
 const ensureDir = (dir) => fs.mkdirSync(dir, { recursive: true });
 
-const badge = (text, tone = 'blue') => `<span class="badge ${tone}">${text}</span>`;
+const fileUri = (filePath) => `file://${filePath}`;
 
-const sparkline = (title = 'Glicose') => `
-  <svg class="chart" viewBox="0 0 340 156" role="img" aria-label="Evolução de ${title}">
-    <rect x="0" y="0" width="340" height="156" rx="12"></rect>
-    <line x1="24" y1="52" x2="316" y2="52" class="ref"></line>
-    <line x1="24" y1="104" x2="316" y2="104" class="ref"></line>
-    <polyline points="24,112 82,98 141,73 199,86 258,45 316,31"></polyline>
-    <circle cx="24" cy="112" r="5"></circle>
-    <circle cx="82" cy="98" r="5"></circle>
-    <circle cx="141" cy="73" r="5"></circle>
-    <circle cx="199" cy="86" r="5"></circle>
-    <circle cx="258" cy="45" r="5"></circle>
-    <circle cx="316" cy="31" r="5"></circle>
-  </svg>
-`;
-
-const header = () => `
-  <header class="topbar">
-    <div class="brand">
-      <img src="${appIconUri}" alt="">
-      <div>
-        <p>Organizador de saúde</p>
-        <h1>Organizador de Saúde</h1>
-      </div>
-    </div>
-    <div class="menu-icon"><span></span><span></span><span></span></div>
-  </header>
-`;
-
-const bottomNav = (active) => `
-  <nav class="bottom-nav">
-    ${[
-      { name: 'Resumo', label: 'Resumo' },
-      { name: 'Alertas', label: 'Alertas' },
-      { name: 'Exames', label: 'Exames' },
-      { name: 'Privacidade', label: 'Priv.' },
-    ].map((item) => `
-      <div class="${active === item.name ? 'active' : ''}">
-        <i></i>
-        <strong>${item.label}</strong>
-      </div>
-    `).join('')}
-  </nav>
-`;
-
-const stats = () => `
-  <section class="stats">
-    <article><span>Exames cadastrados</span><strong>8</strong></article>
-    <article><span>Resultados</span><strong>24</strong></article>
-    <article><span>Consultas</span><strong>5</strong></article>
-    <article><span>Medicamentos</span><strong>3</strong></article>
-    <article><span>Anexos</span><strong>6</strong></article>
-    <article class="warn"><span>Fora da referência</span><strong>2</strong></article>
-  </section>
-`;
-
-const resumo = () => `
-  ${header()}
-  <main class="screen phone">
-    <section class="hero">
-      <h2>Resumo geral</h2>
-      <p>Visualize rapidamente seus registros pessoais de saúde.</p>
-    </section>
-    ${stats()}
-    <article class="card">
-      <h3>Exames que merecem atenção</h3>
-      <div class="row">
-        <div>
-          <h4>Hemoglobina glicada</h4>
-          <p>Último resultado acima da referência informada</p>
-        </div>
-        ${badge('Revisar', 'orange')}
-      </div>
-      <div class="divider"></div>
-      <div class="row">
-        <div>
-          <h4>Colesterol LDL</h4>
-          <p>Resultado fora da faixa de referência</p>
-        </div>
-        ${badge('Atenção', 'orange')}
-      </div>
-    </article>
-    <article class="card">
-      <h3>Preparação</h3>
-      <ul class="checklist">
-        <li>Revisar exames alterados</li>
-        <li>Conferir medicamentos em uso</li>
-        <li>Anotar sintomas ou mudanças recentes</li>
-        <li>Separar perguntas para o profissional</li>
-      </ul>
-    </article>
-    <article class="card">
-      <h3>Privacidade</h3>
-      <p>Dados salvos localmente no dispositivo. Sem servidor online, anúncios ou rastreamento.</p>
-    </article>
-  </main>
-  ${bottomNav('Resumo')}
-`;
-
-const exames = () => `
-  ${header()}
-  <main class="screen phone">
-    <section class="hero">
-      <h2>Exames</h2>
-      <p>Cadastre exames e acompanhe resultados.</p>
-    </section>
-    <section class="segmented">
-      <strong>Cadastrar exame</strong>
-      <span>Lançar resultado</span>
-      <span>Evolução</span>
-    </section>
-    <article class="card">
-      <h3>Cadastro de exame</h3>
-      <div class="form-grid">
-        <label>Nome do exame<span>Hemograma completo</span></label>
-        <label>Unidade<span>mg/dL</span></label>
-        <label>Referência mínima<span>70</span></label>
-        <label>Referência máxima<span>99</span></label>
-      </div>
-      <button>Salvar exame</button>
-    </article>
-    <article class="card">
-      <div class="row">
-        <div>
-          <h3>Evolução dos exames</h3>
-          <p>Glicose - últimos resultados cadastrados</p>
-        </div>
-        ${badge('Normal')}
-      </div>
-      ${sparkline('Glicose')}
-    </article>
-    <article class="card">
-      <h3>Política de privacidade</h3>
-      <p>O app mantém registros e anexos no próprio aparelho e não substitui orientação profissional.</p>
-      ${badge('Armazenamento local')}
-    </article>
-  </main>
-  ${bottomNav('Exames')}
-`;
-
-const preparacao = () => `
-  ${header()}
-  <main class="screen phone">
-    <section class="hero">
-      <h2>Resumo pessoal</h2>
-      <p>Organize informações importantes antes de uma consulta.</p>
-    </section>
-    <article class="card">
-      <h3>Exames alterados</h3>
-      <div class="compact alert">
-        <div>
-          <h4>Hemoglobina glicada</h4>
-          <p>12/06/2026 • 7,2%</p>
-          <p>Referência: 4,0 / 5,6%</p>
-        </div>
-        ${badge('Alto', 'orange')}
-      </div>
-      <div class="compact alert">
-        <div>
-          <h4>Colesterol LDL</h4>
-          <p>10/06/2026 • 158 mg/dL</p>
-          <p>Referência: 0 / 130 mg/dL</p>
-        </div>
-        ${badge('Alto', 'orange')}
-      </div>
-    </article>
-    <article class="card">
-      <h3>Medicamentos em uso</h3>
-      <div class="compact"><div><h4>Losartana</h4><p>50 mg • 1x ao dia</p><p>Uso contínuo</p></div></div>
-      <div class="compact"><div><h4>Vitamina D</h4><p>2000 UI • manhã</p><p>Conforme orientação recebida</p></div></div>
-    </article>
-    <article class="card">
-      <h3>Atendimentos recentes</h3>
-      <div class="compact"><div><h4>Clínico geral</h4><p>08/06/2026 • realizada</p><p>Revisão de exames e rotina.</p></div></div>
-    </article>
-    <article class="card">
-      <h3>Evolução</h3>
-      ${sparkline('Hemoglobina glicada')}
-    </article>
-  </main>
-  ${bottomNav('Alertas')}
-`;
-
-const ipadResumo = () => `
-  <div class="ipad-shell">
-    <aside>
-      <img src="${appIconUri}" alt="">
-      <h1>Organizador de Saúde</h1>
-      <p>Registros pessoais salvos no dispositivo.</p>
-      <nav>
-        <strong>Resumo</strong>
-        <span>Alertas</span>
-        <span>Preparação</span>
-        <span>Consultas</span>
-        <span>Exames</span>
-        <span>Privacidade</span>
-      </nav>
-    </aside>
-    <main>
-      <section class="hero ipad">
-        <div>
-          <p>Organizador de saúde</p>
-          <h2>Resumo geral</h2>
-        </div>
-        ${badge('Dados locais')}
-      </section>
-      ${stats()}
-      <section class="ipad-grid">
-        <article class="card">
-          <h3>Exames que merecem atenção</h3>
-          <div class="compact alert"><div><h4>Hemoglobina glicada</h4><p>12/06/2026 • 7,2%</p><p>Acima da referência informada.</p></div>${badge('Revisar', 'orange')}</div>
-          <div class="compact alert"><div><h4>Colesterol LDL</h4><p>10/06/2026 • 158 mg/dL</p><p>Resultado fora da faixa de referência.</p></div>${badge('Atenção', 'orange')}</div>
-        </article>
-        <article class="card">
-          <h3>Evolução dos exames</h3>
-          ${sparkline('Glicose')}
-          <p>Glicose - últimos resultados cadastrados</p>
-        </article>
-        <article class="card">
-          <h3>Preparação para consulta</h3>
-          <ul class="checklist">
-            <li>Revisar exames alterados</li>
-            <li>Conferir medicamentos em uso</li>
-            <li>Separar perguntas para o profissional</li>
-          </ul>
-        </article>
-        <article class="card">
-          <h3>Privacidade</h3>
-          <p>Dados salvos localmente no aparelho. Sem anúncios, rastreamento ou venda de dados.</p>
-          ${badge('Armazenamento local')}
-        </article>
-      </section>
-    </main>
-  </div>
-`;
-
-const bodyFor = {
-  resumo,
-  exames,
-  preparacao,
-  'ipad-resumo': ipadResumo,
+const cleanOutput = () => {
+  [
+    sourceDir,
+    path.join(outRoot, 'iphone-6.5'),
+    path.join(outRoot, 'iphone-6.7'),
+    path.join(outRoot, 'ipad-13'),
+    path.join(outRoot, 'iphone-6.9'),
+    path.join(outRoot, 'ipad'),
+  ].forEach((dir) => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
 };
 
-const htmlFor = (screen, spec) => `<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    * { box-sizing: border-box; }
-    html, body { width: ${spec.cssWidth}px; min-height: ${spec.cssHeight}px; margin: 0; overflow: hidden; }
-    body {
-      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #17233b;
-      background: linear-gradient(180deg, #eef6ff 0, #f9f3ec 330px, #f8fafc 100%);
-      letter-spacing: 0;
-    }
-    h1, h2, h3, h4, p { margin: 0; overflow-wrap: anywhere; }
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      height: 62px;
-      padding: 10px 14px;
-      background: rgba(248,250,252,.96);
-      border-bottom: 1px solid rgba(35,100,170,.12);
-      backdrop-filter: blur(10px);
-    }
-    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .brand img { width: 34px; height: 34px; object-fit: contain; border-radius: 8px; }
-    .brand p { color: #657184; font-size: 11px; font-weight: 800; line-height: 1.1; }
-    .brand h1 { font-size: 18px; line-height: 1.05; }
-    .menu-icon { display: grid; gap: 4px; place-content: center; width: 40px; height: 36px; border: 1px solid rgba(35,100,170,.22); border-radius: 8px; background: #fff; color: #0f766e; }
-    .menu-icon span { display: block; width: 18px; height: 2px; background: currentColor; border-radius: 99px; }
-    .screen.phone { height: calc(100vh - 122px); overflow: hidden; padding: 12px 14px 0; }
-    .hero { margin-bottom: 12px; }
-    .hero h2 { font-size: 25px; line-height: 1.06; margin-bottom: 4px; }
-    .hero p, .card p { color: #5f6f86; font-size: 14px; line-height: 1.32; }
-    .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-bottom: 12px; }
-    .stats article, .card {
-      position: relative;
-      overflow: hidden;
-      background: rgba(255,255,255,.94);
-      border: 1px solid rgba(73,100,132,.18);
-      border-radius: 8px;
-      box-shadow: 0 1px 0 rgba(255,255,255,.8), 0 8px 22px rgba(15,23,42,.055);
-    }
-    .stats article { min-height: 72px; padding: 10px; }
-    .stats span { display: block; color: #38516e; font-size: 12px; font-weight: 800; line-height: 1.15; }
-    .stats strong { display: block; margin-top: 7px; color: #0f766e; font-size: 25px; line-height: .95; }
-    .stats .warn strong { color: #d16b4f; }
-    .card { padding: 14px; margin-bottom: 12px; }
-    .card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: linear-gradient(180deg, #18a4a3 0%, #2c78bd 72%, #d16b4f 100%); opacity: .55; }
-    .card h3 { font-size: 19px; line-height: 1.1; margin-bottom: 10px; }
-    .card h4 { font-size: 16px; line-height: 1.12; margin-bottom: 3px; }
-    .row, .compact { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .divider { height: 1px; margin: 11px 0; background: rgba(35,100,170,.14); }
-    .badge { display: inline-flex; align-items: center; justify-content: center; min-height: 26px; padding: 4px 9px; border-radius: 999px; background: #e7f4fb; color: #205d8f; font-size: 12px; font-weight: 900; white-space: nowrap; }
-    .badge.orange { background: #ffece0; color: #9b422f; }
-    .checklist { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; color: #17233b; font-size: 15px; font-weight: 800; }
-    .checklist li { position: relative; padding-left: 28px; line-height: 1.25; }
-    .checklist li::before { content: ""; position: absolute; left: 0; top: 2px; width: 18px; height: 18px; border-radius: 5px; background: linear-gradient(180deg, #23bbb6 0%, #148e95 100%); }
-    .checklist li::after { content: ""; position: absolute; left: 5px; top: 7px; width: 9px; height: 5px; border: solid #fff; border-width: 0 0 2px 2px; transform: rotate(-45deg); }
-    .segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
-    .segmented strong, .segmented span { min-height: 42px; display: grid; place-items: center; border: 1px solid rgba(35,100,170,.24); border-radius: 8px; padding: 8px; font-size: 13px; font-weight: 900; text-align: center; color: #0f766e; background: #fff; }
-    .segmented strong { background: #0f766e; color: #fff; }
-    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    label { display: grid; gap: 5px; color: #38516e; font-size: 13px; font-weight: 900; }
-    label span { min-height: 40px; display: flex; align-items: center; padding: 8px 10px; border: 1px solid rgba(24,50,76,.18); border-radius: 8px; background: #fff; color: #5f6f86; font-size: 14px; font-weight: 500; }
-    button { min-height: 42px; margin-top: 12px; border: 0; border-radius: 8px; padding: 8px 18px; background: #0f766e; color: #fff; font: inherit; font-size: 15px; font-weight: 900; }
-    .chart { width: 100%; height: auto; display: block; margin-top: 8px; }
-    .chart rect { fill: #fbf8f3; }
-    .chart polyline { fill: none; stroke: #2364aa; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
-    .chart circle { fill: #2364aa; stroke: #fff; stroke-width: 2; }
-    .chart .ref { stroke: #d16b4f; stroke-width: 1.5; stroke-dasharray: 5 5; opacity: .7; }
-    .compact { border: 1px solid rgba(35,100,170,.12); border-radius: 8px; padding: 12px; background: #fff; margin-bottom: 10px; }
-    .compact.alert { border-left: 4px solid #d16b4f; background: #fff4ee; }
-    .compact p { font-size: 14px; font-weight: 700; }
-    .bottom-nav { position: fixed; left: 0; bottom: 0; width: ${spec.cssWidth}px; height: 60px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: rgba(248,250,252,.98); border-top: 1px solid rgba(35,100,170,.12); }
-    .bottom-nav div { min-width: 0; display: grid; justify-items: center; align-content: center; gap: 5px; color: #657184; font-size: 11px; font-weight: 900; }
-    .bottom-nav strong { max-width: 100%; white-space: nowrap; }
-    .bottom-nav i { width: 14px; height: 14px; border-radius: 50%; background: currentColor; }
-    .bottom-nav .active { color: #0f766e; }
-    .ipad-shell { min-height: 100vh; display: grid; grid-template-columns: 280px 1fr; }
-    .ipad-shell aside { padding: 44px 30px; background: rgba(255,255,255,.88); border-right: 1px solid rgba(35,100,170,.12); }
-    .ipad-shell aside img { width: 64px; height: 64px; object-fit: contain; object-position: left center; margin-bottom: 22px; }
-    .ipad-shell aside h1 { font-size: 34px; line-height: 1.04; margin-bottom: 10px; }
-    .ipad-shell aside p { color: #5f6f86; font-size: 18px; line-height: 1.35; margin-bottom: 36px; }
-    .ipad-shell nav { display: grid; gap: 12px; }
-    .ipad-shell nav strong, .ipad-shell nav span { display: block; border-radius: 8px; padding: 16px; font-size: 18px; font-weight: 900; }
-    .ipad-shell nav strong { background: #2364aa; color: #fff; }
-    .ipad-shell nav span { color: #38516e; background: #f1f6fa; }
-    .ipad-shell main { padding: 48px; overflow: hidden; }
-    .hero.ipad { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-    .hero.ipad p { color: #657184; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
-    .hero.ipad h2 { font-size: 54px; }
-    .ipad-shell .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-bottom: 22px; }
-    .ipad-shell .stats article { min-height: 116px; padding: 18px; }
-    .ipad-shell .stats span { font-size: 18px; }
-    .ipad-shell .stats strong { font-size: 44px; }
-    .ipad-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-    .ipad-shell .card { min-height: 270px; padding: 24px; margin: 0; }
-    .ipad-shell .card h3 { font-size: 28px; }
-    .ipad-shell .card h4 { font-size: 22px; }
-    .ipad-shell .card p, .ipad-shell .checklist { font-size: 20px; }
-    .ipad-shell .badge { min-height: 34px; font-size: 16px; padding: 7px 14px; }
-  </style>
-</head>
-<body>${bodyFor[screen]()}</body>
-</html>`;
+const now = '2026-06-15T12:00:00.000Z';
 
-const chromeArgs = (htmlPath, pngPath, spec) => [
+const demoState = {
+  version: 1,
+  personal: {
+    nome: 'Roberto Crisppi',
+    email: 'roberto@example.com',
+    telefone: '(11) 99999-0000',
+    data_nascimento: '1982-04-18',
+    updated_at: now,
+  },
+  profile: {
+    peso: '82',
+    altura: '1.78',
+    tipo_sanguineo: 'O+',
+    alergias: 'Sem alergias cadastradas.',
+    condicoes_cronicas: 'Hipertensao em acompanhamento.',
+    observacoes: 'Rotina de exames semestrais.',
+    updated_at: now,
+  },
+  preConsultation: {
+    observacoes: 'Levar exames recentes e revisar valores alterados.',
+    perguntas: 'Preciso repetir algum exame? Ajustar medicamentos em uso?',
+    updated_at: now,
+  },
+  exams: [
+    {
+      id: 'exam-glicose',
+      nome: 'Glicose',
+      tipo: 'laboratorial',
+      unidade: 'mg/dL',
+      referencia_min: '70',
+      referencia_max: '99',
+      frequencia: 'Semestral',
+      laboratorio: 'Laboratorio Central',
+      observacoes: 'Controle de rotina.',
+      data_realizacao: '',
+      slug: 'glicose',
+      created_at: '2026-01-10T12:00:00.000Z',
+      updated_at: now,
+    },
+    {
+      id: 'exam-hba1c',
+      nome: 'Hemoglobina glicada',
+      tipo: 'laboratorial',
+      unidade: '%',
+      referencia_min: '4',
+      referencia_max: '5.6',
+      frequencia: 'Semestral',
+      laboratorio: 'Laboratorio Central',
+      observacoes: 'Acompanhar tendencia.',
+      data_realizacao: '',
+      slug: 'hemoglobina-glicada',
+      created_at: '2026-01-10T12:00:00.000Z',
+      updated_at: now,
+    },
+    {
+      id: 'exam-ldl',
+      nome: 'Colesterol LDL',
+      tipo: 'laboratorial',
+      unidade: 'mg/dL',
+      referencia_min: '0',
+      referencia_max: '130',
+      frequencia: 'Anual',
+      laboratorio: 'Laboratorio Central',
+      observacoes: 'Perfil lipidico.',
+      data_realizacao: '',
+      slug: 'colesterol-ldl',
+      created_at: '2026-01-10T12:00:00.000Z',
+      updated_at: now,
+    },
+    {
+      id: 'exam-vitd',
+      nome: 'Vitamina D',
+      tipo: 'laboratorial',
+      unidade: 'ng/mL',
+      referencia_min: '30',
+      referencia_max: '100',
+      frequencia: 'Anual',
+      laboratorio: 'Laboratorio Central',
+      observacoes: 'Reposicao conforme orientacao.',
+      data_realizacao: '',
+      slug: 'vitamina-d',
+      created_at: '2026-01-10T12:00:00.000Z',
+      updated_at: now,
+    },
+  ],
+  examResults: [
+    {
+      id: 'result-glicose-1',
+      exame_id: 'exam-glicose',
+      data_coleta: '2026-01-12',
+      valor: '92',
+      laboratorio: 'Laboratorio Central',
+      observacoes: 'Jejum de 8 horas.',
+      created_at: '2026-01-12T12:00:00.000Z',
+      updated_at: '2026-01-12T12:00:00.000Z',
+    },
+    {
+      id: 'result-glicose-2',
+      exame_id: 'exam-glicose',
+      data_coleta: '2026-04-20',
+      valor: '98',
+      laboratorio: 'Laboratorio Central',
+      observacoes: 'Controle de rotina.',
+      created_at: '2026-04-20T12:00:00.000Z',
+      updated_at: '2026-04-20T12:00:00.000Z',
+    },
+    {
+      id: 'result-glicose-3',
+      exame_id: 'exam-glicose',
+      data_coleta: '2026-06-12',
+      valor: '104',
+      laboratorio: 'Laboratorio Central',
+      observacoes: 'Resultado para revisar.',
+      created_at: '2026-06-12T12:00:00.000Z',
+      updated_at: '2026-06-12T12:00:00.000Z',
+    },
+    {
+      id: 'result-hba1c-1',
+      exame_id: 'exam-hba1c',
+      data_coleta: '2026-01-12',
+      valor: '5.4',
+      laboratorio: 'Laboratorio Central',
+      observacoes: 'Dentro da referencia.',
+      created_at: '2026-01-12T12:00:00.000Z',
+      updated_at: '2026-01-12T12:00:00.000Z',
+    },
+    {
+      id: 'result-hba1c-2',
+      exame_id: 'exam-hba1c',
+      data_coleta: '2026-06-12',
+      valor: '7.2',
+      laboratorio: 'Laboratorio Central',
+      observacoes: 'Acima da referencia informada.',
+      created_at: '2026-06-12T12:00:00.000Z',
+      updated_at: '2026-06-12T12:00:00.000Z',
+    },
+    {
+      id: 'result-ldl-1',
+      exame_id: 'exam-ldl',
+      data_coleta: '2026-06-10',
+      valor: '158',
+      laboratorio: 'Laboratorio Central',
+      observacoes: 'Fora da faixa cadastrada.',
+      created_at: '2026-06-10T12:00:00.000Z',
+      updated_at: '2026-06-10T12:00:00.000Z',
+    },
+    {
+      id: 'result-vitd-1',
+      exame_id: 'exam-vitd',
+      data_coleta: '2026-06-10',
+      valor: '36',
+      laboratorio: 'Laboratorio Central',
+      observacoes: 'Dentro da referencia.',
+      created_at: '2026-06-10T12:00:00.000Z',
+      updated_at: '2026-06-10T12:00:00.000Z',
+    },
+  ],
+  attachments: [
+    {
+      id: 'attachment-hemograma',
+      exame_id: 'exam-hba1c',
+      resultado_id: 'result-hba1c-2',
+      nome_original: 'resultado-junho.pdf',
+      mime_type: 'application/pdf',
+      tamanho: 248000,
+      storage: 'data_url',
+      path: '',
+      uri: '',
+      data_url: '',
+      created_at: '2026-06-12T12:00:00.000Z',
+    },
+    {
+      id: 'attachment-ldl',
+      exame_id: 'exam-ldl',
+      resultado_id: 'result-ldl-1',
+      nome_original: 'perfil-lipidico.pdf',
+      mime_type: 'application/pdf',
+      tamanho: 219000,
+      storage: 'data_url',
+      path: '',
+      uri: '',
+      data_url: '',
+      created_at: '2026-06-10T12:00:00.000Z',
+    },
+  ],
+  consultations: [
+    {
+      id: 'consult-1',
+      data_consulta: '2026-06-22',
+      hora_inicio: '09:30',
+      hora_fim: '10:00',
+      medico: 'Clinico geral',
+      motivo: 'Revisao de exames',
+      diagnostico: 'Levar resultados recentes e lista de medicamentos.',
+      status: 'agendada',
+      created_at: '2026-06-10T12:00:00.000Z',
+      updated_at: now,
+    },
+    {
+      id: 'consult-2',
+      data_consulta: '2026-05-14',
+      hora_inicio: '15:00',
+      hora_fim: '15:40',
+      medico: 'Cardiologista',
+      motivo: 'Acompanhamento de rotina',
+      diagnostico: 'Manter controle pressorico e retorno com exames.',
+      status: 'realizada',
+      created_at: '2026-05-14T12:00:00.000Z',
+      updated_at: '2026-05-14T12:00:00.000Z',
+    },
+  ],
+  medications: [
+    {
+      id: 'med-1',
+      nome: 'Losartana',
+      laboratorio: 'Uso continuo',
+      dosagem: '50 mg',
+      intervalo: '1x ao dia',
+      status: 'Em Uso',
+      created_at: '2026-01-10T12:00:00.000Z',
+      updated_at: now,
+    },
+    {
+      id: 'med-2',
+      nome: 'Vitamina D',
+      laboratorio: 'Conforme orientacao',
+      dosagem: '2000 UI',
+      intervalo: 'Manha',
+      status: 'Em Uso',
+      created_at: '2026-01-10T12:00:00.000Z',
+      updated_at: now,
+    },
+  ],
+  security: {
+    localOnly: true,
+    cloudSync: false,
+    privacyAcceptedAt: '2026-06-15T12:00:00.000Z',
+    lastLoginAt: now,
+  },
+  updatedAt: now,
+};
+
+const session = {
+  token: 'local-app-store-screenshots',
+  refresh_token: '',
+  user: {
+    id: 'local-device',
+    name: 'Roberto Crisppi',
+    email: '',
+  },
+  logged_at: now,
+};
+
+const seedScript = () => `
+  <script>
+    localStorage.setItem(${JSON.stringify(legacyStorageKey)}, ${JSON.stringify(JSON.stringify(demoState))});
+    localStorage.setItem(${JSON.stringify(sessionKey)}, ${JSON.stringify(JSON.stringify(session))});
+  </script>
+`;
+
+const postRenderScript = (capture) => `
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const targetPanel = ${JSON.stringify(capture.panel || '')};
+      const settle = () => {
+        if (targetPanel) {
+          document.querySelector('[data-exam-panel-target="' + targetPanel + '"]')?.click();
+        }
+        document.querySelector('#app-nav')?.setAttribute('hidden', '');
+        document.body.classList.remove('menu-is-open');
+        window.scrollTo(0, 0);
+      };
+      setTimeout(settle, 120);
+      setTimeout(settle, 420);
+    });
+  </script>
+`;
+
+const captureStyles = (spec) => `
+  <style>
+    html, body {
+      width: ${spec.cssWidth}px;
+      min-height: ${spec.cssHeight}px;
+      margin: 0;
+      overflow: hidden;
+      background: #f8fafc;
+    }
+
+    body.app-local-shell {
+      min-height: ${spec.cssHeight}px;
+    }
+
+    .app-local-main {
+      padding-bottom: 0.9rem;
+    }
+
+    @media (min-width: 769px) {
+      .app-local-main {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+      }
+
+      .dashboard-hero {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .app-local-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .dashboard-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .doctor-summary,
+      .screen-block[data-screen="pre-consultation"] .local-stack {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+      }
+
+      .screen-block[data-screen="pre-consultation"] .local-stack .local-card:first-child,
+      .screen-block[data-screen="pre-consultation"] .local-stack .local-card:last-child {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+`;
+
+const rewriteAssetPaths = (html) => html
+  .replace(/href="assets\/styles\/app\.css([^"]*)"/, `href="${fileUri(path.join(appRoot, 'assets', 'styles', 'app.css'))}$1"`)
+  .replace(/src="assets\/images\/logo\.png"/g, `src="${fileUri(path.join(appRoot, 'assets', 'images', 'logo.png'))}"`)
+  .replace(/src="assets\/js\/local-health-app\.js"/, `src="${fileUri(path.join(appRoot, 'assets', 'js', 'local-health-app.js'))}"`)
+  .replace(/src="assets\/js\/app-page\.js"/, `src="${fileUri(path.join(appRoot, 'assets', 'js', 'app-page.js'))}"`);
+
+const htmlFor = (capture, spec) => {
+  const index = fs.readFileSync(indexPath, 'utf8');
+  return rewriteAssetPaths(index)
+    .replace('</head>', `${captureStyles(spec)}</head>`)
+    .replace('<script src="', `${seedScript()}<script src="`)
+    .replace('</body>', `${postRenderScript(capture)}</body>`);
+};
+
+const chromeArgs = (htmlPath, pngPath, spec, capture) => [
   '--headless=new',
   '--disable-gpu',
   '--hide-scrollbars',
   '--no-first-run',
   '--no-default-browser-check',
   '--disable-dev-shm-usage',
+  '--allow-file-access-from-files',
+  '--timeout=1400',
   `--force-device-scale-factor=${spec.scale}`,
   `--window-size=${spec.cssWidth},${spec.cssHeight}`,
   `--screenshot=${pngPath}`,
-  `file://${htmlPath}`,
+  `${fileUri(htmlPath)}?screen=${encodeURIComponent(capture.screen)}`,
 ];
 
 const main = () => {
@@ -410,20 +433,22 @@ const main = () => {
     throw new Error(`Google Chrome not found at ${chromePath}`);
   }
 
+  cleanOutput();
   ensureDir(sourceDir);
 
   specs.forEach((spec) => {
     const folder = path.join(outRoot, spec.folder);
     ensureDir(folder);
-    spec.screenshots.forEach((screen, index) => {
-      const htmlPath = path.join(sourceDir, `${spec.folder}-${screen}.html`);
+    captures.forEach((capture, index) => {
+      const htmlPath = path.join(sourceDir, `${spec.folder}-${capture.id}.html`);
       const pngPath = path.join(
         folder,
-        `${String(index + 1).padStart(2, '0')}-${screen}-${spec.cssWidth * spec.scale}x${spec.cssHeight * spec.scale}.png`,
+        `${String(index + 1).padStart(2, '0')}-${capture.id}-${spec.cssWidth * spec.scale}x${spec.cssHeight * spec.scale}.png`,
       );
-      fs.writeFileSync(htmlPath, htmlFor(screen, spec));
 
-      const result = spawnSync(chromePath, chromeArgs(htmlPath, pngPath, spec), {
+      fs.writeFileSync(htmlPath, htmlFor(capture, spec));
+
+      const result = spawnSync(chromePath, chromeArgs(htmlPath, pngPath, spec, capture), {
         stdio: 'inherit',
       });
       if (result.status !== 0) {
@@ -434,4 +459,13 @@ const main = () => {
   });
 };
 
-main();
+module.exports = {
+  demoState,
+  session,
+  legacyStorageKey,
+  sessionKey,
+};
+
+if (require.main === module) {
+  main();
+}
