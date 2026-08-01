@@ -81,6 +81,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (name === 'pre-consultation') {
       renderPreConsultation();
     }
+    if (name === 'vitals') {
+      renderVitals();
+    }
     window.history.replaceState({}, '', `index.html?screen=${encodeURIComponent(name)}`);
   };
 
@@ -145,6 +148,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     element.hidden = message === '';
     element.classList.remove('success', 'error');
     element.classList.add(type);
+  };
+
+  const confirmDeletion = (extraWarning = '') => window.confirm(
+    `Deseja realmente excluir este registro?${extraWarning ? `\n\n${extraWarning}` : ''}`
+  );
+
+  const refreshExamViews = () => {
+    renderExamDefinitions();
+    renderExamResults();
+    renderExamEvolution();
+    renderAlerts();
+    renderDoctorMode();
+    renderPreConsultation();
+    renderDashboard();
   };
 
   const fillForm = (form, data) => {
@@ -270,6 +287,55 @@ document.addEventListener('DOMContentLoaded', async () => {
   fillForm(profileForm, app.store.getProfile());
   fillForm(preConsultationForm, app.store.getPreConsultation?.());
 
+  const vitalsStorageKey = 'organizador-saude:vitals';
+  const vitalsForm = $('#vitals-form');
+  const listVitals = () => {
+    try {
+      const records = JSON.parse(localStorage.getItem(vitalsStorageKey) || '[]');
+      return Array.isArray(records) ? records : [];
+    } catch (_) {
+      return [];
+    }
+  };
+  const renderVitals = () => {
+    const host = $('#vitals-list');
+    if (!host) return;
+    const records = listVitals().sort((a, b) => `${b.data}T${b.hora}`.localeCompare(`${a.data}T${a.hora}`));
+    host.innerHTML = records.length
+      ? records.map((item) => `
+          <article class="vitals-entry">
+            <strong>PA ${escapeHtml(item.sistolica)}/${escapeHtml(item.diastolica)} mmHg • FC ${escapeHtml(item.fc)} bpm</strong>
+            <p>${escapeHtml(formatDate(item.data))}${item.hora ? ` às ${escapeHtml(item.hora)}` : ''}</p>
+            ${item.observacoes ? `<p class="muted">${escapeHtml(item.observacoes)}</p>` : ''}
+          </article>
+        `).join('')
+      : '<p class="muted">Nenhum registro de sinais vitais.</p>';
+  };
+  if (vitalsForm) {
+    const now = new Date();
+    vitalsForm.elements.data.value = now.toISOString().slice(0, 10);
+    vitalsForm.elements.hora.value = now.toTimeString().slice(0, 5);
+  }
+  $('#vitals-save')?.addEventListener('click', () => {
+    if (!vitalsForm?.checkValidity()) {
+      vitalsForm?.reportValidity();
+      return;
+    }
+    const record = {
+      id: globalThis.crypto?.randomUUID?.() || `${Date.now()}`,
+      ...getFormData(vitalsForm),
+    };
+    localStorage.setItem(vitalsStorageKey, JSON.stringify([...listVitals(), record]));
+    const savedDate = record.data;
+    const savedTime = record.hora;
+    vitalsForm.reset();
+    vitalsForm.elements.data.value = savedDate;
+    vitalsForm.elements.hora.value = savedTime;
+    showMessage($('#vitals-feedback'), 'Sinais vitais salvos no dispositivo.');
+    renderVitals();
+  });
+  renderVitals();
+
   $('#personal-save')?.addEventListener('click', async () => {
     if (!personalForm.checkValidity()) {
       personalForm.reportValidity();
@@ -310,7 +376,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${item.motivo || '—'}</td>
         <td>${item.diagnostico || '—'}</td>
         <td>${item.status || 'agendada'}</td>
-        <td><button type="button" class="button ghost" data-edit-consultation="${item.id}">Editar</button></td>
+        <td><div class="inline-actions"><button type="button" class="button ghost" data-edit-consultation="${item.id}">Editar</button><button type="button" class="button danger" data-delete-consultation="${item.id}">Excluir</button></div></td>
       `;
       tbody.appendChild(tr);
     });
@@ -321,6 +387,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         fillForm(consultationForm, consultation);
         activateScreen('consultations');
         consultationForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+    $$('[data-delete-consultation]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        if (!confirmDeletion()) return;
+        await app.store.deleteConsultation(button.dataset.deleteConsultation);
+        state.consultationEditId = '';
+        consultationForm.reset();
+        showMessage($('#consultation-feedback'), 'Registro excluído com sucesso.');
+        renderConsultations();
+        renderDoctorMode();
+        renderDashboard();
       });
     });
   };
@@ -364,7 +442,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${item.dosagem || '—'}</td>
         <td>${item.intervalo || '—'}</td>
         <td>${item.status || 'Em Uso'}</td>
-        <td><button type="button" class="button ghost" data-edit-medication="${item.id}">Editar</button></td>
+        <td><div class="inline-actions"><button type="button" class="button ghost" data-edit-medication="${item.id}">Editar</button><button type="button" class="button danger" data-delete-medication="${item.id}">Excluir</button></div></td>
       `;
       tbody.appendChild(tr);
     });
@@ -375,6 +453,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         fillForm(medicationForm, medication);
         activateScreen('medications');
         medicationForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+    $$('[data-delete-medication]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        if (!confirmDeletion()) return;
+        await app.store.deleteMedication(button.dataset.deleteMedication);
+        state.medicationEditId = '';
+        medicationForm.reset();
+        medicationForm.querySelector('[name="status"]').value = 'Em Uso';
+        showMessage($('#medication-feedback'), 'Registro excluído com sucesso.');
+        renderMedications();
+        renderDoctorMode();
+        renderPreConsultation();
+        renderDashboard();
       });
     });
   };
@@ -449,7 +541,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${item.unidade || '—'}</td>
         <td>${item.referencia_min || '—'} / ${item.referencia_max || '—'}</td>
         <td>${item.frequencia || '—'}</td>
-        <td><button type="button" class="button ghost" data-edit-exam="${item.id}">Editar</button></td>
+        <td><div class="inline-actions"><button type="button" class="button ghost" data-edit-exam="${item.id}">Editar</button><button type="button" class="button danger" data-delete-exam="${item.id}">Excluir</button></div></td>
       `;
       tbody.appendChild(tr);
     });
@@ -465,6 +557,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         activateScreen('exams');
         activateExamPanel('definition');
         examDefinitionForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+    $$('[data-delete-exam]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const id = button.dataset.deleteExam;
+        const summary = app.store.getExamDeletionSummary(id);
+        const warning = summary.results || summary.attachments
+          ? `Este exame possui ${summary.results} resultado(s) e ${summary.attachments} anexo(s). Todos também serão excluídos.`
+          : '';
+        if (!confirmDeletion(warning)) return;
+        await app.store.deleteExamDefinition(id);
+        state.examEditId = '';
+        examDefinitionForm.reset();
+        showMessage($('#exam-feedback'), 'Registro excluído com sucesso.');
+        refreshExamViews();
       });
     });
     refreshExamSelect();
@@ -509,6 +616,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <p><strong>Laboratório:</strong> ${item.laboratorio || '—'}</p>
           <p><strong>Observações:</strong> ${item.observacoes || '—'}</p>
           ${attachmentHtml}
+          <div class="inline-actions"><button type="button" class="button danger" data-delete-result="${item.id}">Excluir</button></div>
         `;
         container.appendChild(article);
       });
@@ -530,7 +638,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <h3>${item.exame_nome}</h3>
           <p class="muted">${formatDate(item.data_coleta)} • ${item.nome_original}</p>
           <p>${item.resultado_observacoes || 'Sem observações.'}</p>
-          <button type="button" class="button secondary" data-open-attachment="${item.id}">Abrir anexo</button>
+          <div class="inline-actions"><button type="button" class="button secondary" data-open-attachment="${item.id}">Abrir anexo</button><button type="button" class="button danger" data-delete-attachment="${item.id}">Excluir</button></div>
         `;
         attachmentsContainer.appendChild(article);
       });
@@ -545,6 +653,23 @@ document.addEventListener('DOMContentLoaded', async () => {
           return;
         }
         window.open(url, '_blank', 'noopener');
+      });
+    });
+    $$('[data-delete-result]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        if (!confirmDeletion('Os anexos vinculados a este resultado também serão excluídos.')) return;
+        await app.store.deleteExamResult(button.dataset.deleteResult);
+        showMessage($('#exam-result-feedback'), 'Registro excluído com sucesso.');
+        refreshExamViews();
+      });
+    });
+    $$('[data-delete-attachment]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        if (!confirmDeletion()) return;
+        await app.store.deleteAttachment(button.dataset.deleteAttachment);
+        showMessage($('#exam-result-feedback'), 'Registro excluído com sucesso.');
+        renderExamResults();
+        renderDashboard();
       });
     });
   };

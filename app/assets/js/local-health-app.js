@@ -156,6 +156,24 @@
     return attachment.data_url || '';
   };
 
+  const removeAttachmentFile = async (attachment) => {
+    if (!attachment || attachment.storage !== 'filesystem' || !attachment.path) {
+      return;
+    }
+    const filesystem = getFilesystem();
+    if (!filesystem || typeof filesystem.deleteFile !== 'function') {
+      return;
+    }
+    try {
+      await filesystem.deleteFile({
+        path: attachment.path,
+        directory: 'DATA',
+      });
+    } catch (error) {
+      // O registro deve poder ser removido mesmo se o arquivo já não existir.
+    }
+  };
+
   const sortByNewest = (items, field = 'updated_at') => [...items].sort((a, b) => {
     const aTime = new Date(a[field] || a.created_at || 0).getTime();
     const bTime = new Date(b[field] || b.created_at || 0).getTime();
@@ -762,6 +780,14 @@
       return clone(state.consultations.find((item) => item.id === id) || null);
     },
 
+    async deleteConsultation(id) {
+      if (!state.consultations.some((item) => item.id === id)) return false;
+      state.consultations = state.consultations.filter((item) => item.id !== id);
+      if (db.native) await db.run('DELETE FROM consultations WHERE id = ?', [id]);
+      else saveLegacyState();
+      return true;
+    },
+
     listMedications() {
       return sortByNewest(state.medications);
     },
@@ -804,12 +830,42 @@
       return clone(state.medications.find((item) => item.id === id) || null);
     },
 
+    async deleteMedication(id) {
+      if (!state.medications.some((item) => item.id === id)) return false;
+      state.medications = state.medications.filter((item) => item.id !== id);
+      if (db.native) await db.run('DELETE FROM medications WHERE id = ?', [id]);
+      else saveLegacyState();
+      return true;
+    },
+
     listExamDefinitions() {
       return [...state.exams].sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR'));
     },
 
     getExamDefinition(id) {
       return clone(state.exams.find((item) => item.id === id) || null);
+    },
+
+    getExamDeletionSummary(id) {
+      return {
+        results: state.examResults.filter((item) => item.exame_id === id).length,
+        attachments: state.attachments.filter((item) => item.exame_id === id).length,
+      };
+    },
+
+    async deleteExamDefinition(id) {
+      if (!state.exams.some((item) => item.id === id)) return false;
+      const attachments = state.attachments.filter((item) => item.exame_id === id);
+      await Promise.all(attachments.map(removeAttachmentFile));
+      state.attachments = state.attachments.filter((item) => item.exame_id !== id);
+      state.examResults = state.examResults.filter((item) => item.exame_id !== id);
+      state.exams = state.exams.filter((item) => item.id !== id);
+      if (db.native) {
+        await db.run('DELETE FROM attachments WHERE exame_id = ?', [id]);
+        await db.run('DELETE FROM exam_results WHERE exame_id = ?', [id]);
+        await db.run('DELETE FROM exams WHERE id = ?', [id]);
+      } else saveLegacyState();
+      return true;
     },
 
     async saveExamDefinition(payload) {
@@ -968,6 +1024,19 @@
       });
     },
 
+    async deleteExamResult(id) {
+      if (!state.examResults.some((item) => item.id === id)) return false;
+      const attachments = state.attachments.filter((item) => item.resultado_id === id);
+      await Promise.all(attachments.map(removeAttachmentFile));
+      state.attachments = state.attachments.filter((item) => item.resultado_id !== id);
+      state.examResults = state.examResults.filter((item) => item.id !== id);
+      if (db.native) {
+        await db.run('DELETE FROM attachments WHERE resultado_id = ?', [id]);
+        await db.run('DELETE FROM exam_results WHERE id = ?', [id]);
+      } else saveLegacyState();
+      return true;
+    },
+
     listExamEvolution() {
       return this.listExamDefinitions().map((exam) => {
         const results = state.examResults
@@ -1016,6 +1085,16 @@
         ...clone(found),
         preview_url: getAttachmentUrl(found),
       };
+    },
+
+    async deleteAttachment(id) {
+      const attachment = state.attachments.find((item) => item.id === id);
+      if (!attachment) return false;
+      await removeAttachmentFile(attachment);
+      state.attachments = state.attachments.filter((item) => item.id !== id);
+      if (db.native) await db.run('DELETE FROM attachments WHERE id = ?', [id]);
+      else saveLegacyState();
+      return true;
     },
   };
 

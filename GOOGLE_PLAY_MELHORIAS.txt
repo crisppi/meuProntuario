@@ -1,0 +1,36 @@
+ORGANIZADOR DE SAÚDE — MELHORIAS DA VERSÃO
+
+FEEDBACK DOS TESTADORES
+
+Durante os testes, os usuários consideraram o aplicativo simples e útil para centralizar informações pessoais de saúde. Como principal sugestão, solicitaram uma maneira clara e segura de excluir registros cadastrados incorretamente ou em duplicidade.
+
+MELHORIA IMPLEMENTADA
+
+Foi adicionada a opção de excluir consultas, medicamentos, exames, resultados e anexos diretamente no aplicativo.
+
+Agora o aplicativo oferece:
+
+- Botão “Excluir” junto às ações de edição dos registros.
+- Confirmação antes da exclusão para evitar remoções acidentais.
+- Aviso especial quando um exame possui resultados ou anexos vinculados.
+- Exclusão dos resultados e anexos associados quando o exame é removido.
+- Exclusão dos anexos associados quando um resultado é removido.
+- Remoção do arquivo anexado do armazenamento privado do dispositivo.
+- Mensagem de confirmação após a exclusão: “Registro excluído com sucesso”.
+- Atualização imediata dos históricos, gráficos, alertas e painel principal.
+
+RESULTADO PARA O USUÁRIO
+
+A melhoria dá ao usuário mais controle sobre seus próprios dados, facilita a correção de cadastros incorretos e duplicados e mantém o histórico de saúde mais organizado.
+
+PRIVACIDADE
+
+Os dados continuam armazenados localmente no dispositivo. O aplicativo não envia automaticamente as informações pessoais de saúde para servidores ou terceiros.
+
+VALIDAÇÃO
+
+A versão foi compilada e aberta com sucesso nos simuladores Android e iOS. O carregamento do painel principal foi verificado nas duas plataformas.
+
+NOVIDADES NESTA VERSÃO — TEXTO CURTO PARA A GOOGLE PLAY
+
+Agora você pode excluir consultas, medicamentos, exames, resultados e anexos com segurança. Incluímos confirmação antes da exclusão e avisos para exames com informações vinculadas. Também realizamos melhorias de organização e estabilidade.
