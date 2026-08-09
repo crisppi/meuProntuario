@@ -303,7 +303,7 @@ th {
   border: 1px solid rgba(35, 100, 170, 0.14);
   border-radius: 12px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 78px);
+  max-height: min(68vh, 520px);
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -313,35 +313,25 @@ th {
 }
 
 .app-local-nav .button {
-  align-items: center;
   border-radius: 8px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
 }
 
-.nav-menu-icon {
+.app-local-nav .nav-vitals-button {
   align-items: center;
-  background: #e8f1fa;
+  display: flex;
+  gap: 10px;
+}
+
+.nav-vitals-icon {
+  align-items: center;
+  background: #e8f5f2;
   border-radius: 50%;
-  color: #2364aa;
+  color: #c13c52;
   display: inline-flex;
   font-size: 16px;
-  flex: 0 0 28px;
   height: 28px;
   justify-content: center;
   width: 28px;
-}
-
-.nav-vitals-icon,
-.nav-alert-icon {
-  background: #e8f5f2;
-  color: #c13c52;
-}
-
-.nav-clear-icon {
-  background: #dce8f1;
-  color: #1d3c5b;
 }
 
 .vitals-entry {
